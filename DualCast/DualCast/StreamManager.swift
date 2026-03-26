@@ -11,6 +11,10 @@ class StreamManager: NSObject, ObservableObject {
     @Published var isStreaming = false
     @Published var connectionStatus = "Disconnected"
     
+    @Published var isMuted: Bool = false {
+        didSet { stream.audioMixerSettings.isMuted = isMuted }
+    }
+    
     @Published var isFrontCameraMain: Bool = false {
         didSet { updatePiP() }
     }

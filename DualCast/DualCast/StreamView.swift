@@ -47,6 +47,18 @@ struct StreamView: View {
                 
                 // Bottom Controls
                 HStack(spacing: 20) {
+                    // Mute Toggle
+                    Button(action: {
+                        streamManager.isMuted.toggle()
+                    }) {
+                        Image(systemName: streamManager.isMuted ? "mic.slash.fill" : "mic.fill")
+                            .font(.title2)
+                            .foregroundColor(streamManager.isMuted ? .red : .white)
+                            .padding()
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
+                    }
+                    
                     // PiP Corner Toggle
                     Button(action: {
                         streamManager.pipCorner = (streamManager.pipCorner + 1) % 4
