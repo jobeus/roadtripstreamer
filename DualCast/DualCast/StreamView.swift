@@ -10,6 +10,7 @@ struct StreamView: View {
     @State private var showChat = true
     @State private var isPanicMode = false
     @State private var isActuallyPaused = false
+    @State private var panicBlink = false
     
     var body: some View {
         ZStack {
@@ -211,19 +212,22 @@ struct StreamView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 20) {
-                // Long-press the pause icon to ACTUALLY pause the stream
                 Image(systemName: "pause.circle.fill")
                     .font(.system(size: 80))
-                    .foregroundColor(isActuallyPaused ? .gray.opacity(0.4) : .gray)
+                    .foregroundColor(isActuallyPaused ? (panicBlink ? .red : .white) : .white)
                 
                 Text("Stream Paused")
                     .font(.title)
                     .fontWeight(.semibold)
-                    .foregroundColor(.gray)
+                    .foregroundColor(isActuallyPaused ? (panicBlink ? .red : .white) : .white)
+                    .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: panicBlink)
                 
                 Text("Double-tap to resume")
                     .font(.subheadline)
-                    .foregroundColor(.gray.opacity(0.6))
+                    .foregroundColor(.white.opacity(0.4))
+            }
+            .onChange(of: isActuallyPaused) { paused in
+                panicBlink = paused
             }
         }
         // Long-press anywhere = ACTUALLY pause the stream (secret)
