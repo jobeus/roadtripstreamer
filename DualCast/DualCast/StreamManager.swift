@@ -23,6 +23,8 @@ class StreamManager: NSObject, ObservableObject {
     }
     
     private var pipObject: VideoTrackScreenObject?
+    private var mapObject: ImageScreenObject?
+
     
     override init() {
         self.stream = RTMPStream(connection: connection)
@@ -75,9 +77,15 @@ class StreamManager: NSObject, ObservableObject {
             let pip = VideoTrackScreenObject()
             pip.track = 1 
             self.pipObject = pip
+            
+            let mapOverlay = ImageScreenObject()
+            mapOverlay.cgImage = nil
+            self.mapObject = mapOverlay
+            
             updatePiP()
             
             try? stream.screen.addChild(pip)
+            try? stream.screen.addChild(mapOverlay)
             
             stream.screen.startRunning()
             
@@ -145,6 +153,24 @@ class StreamManager: NSObject, ObservableObject {
             pip.horizontalAlignment = .right
         default: break
         }
+        
+        // Position map overlay (top right by default for Twitch)
+        if let map = mapObject {
+            let mapW = w * 0.20
+            let mapH = (mapW / 4.0) * 3.0 // 4:3 aspect
+            map.size = CGSize(width: mapW, height: mapH)
+            #if os(macOS)
+            map.layoutMargin = NSEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
+            #else
+            map.layoutMargin = UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
+            #endif
+            map.verticalAlignment = .top
+            map.horizontalAlignment = .right
+        }
+    }
+    
+    func updateMapImage(_ cgImage: CGImage?) {
+        mapObject?.cgImage = cgImage
     }
     
     func startStreaming(rtmpURL: String, streamKey: String) {

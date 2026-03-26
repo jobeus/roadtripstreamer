@@ -4,6 +4,7 @@ import MapboxMaps
 struct MapOverlayView: UIViewRepresentable {
     let routeCoordinates: [CLLocationCoordinate2D]
     let currentLocation: CLLocationCoordinate2D?
+    @ObservedObject var streamManager: StreamManager
     
     func makeUIView(context: Context) -> MapView {
         // Set access token before creating MapView
@@ -41,13 +42,40 @@ struct MapOverlayView: UIViewRepresentable {
     }
     
     func makeCoordinator() -> Coordinator {
-        Coordinator()
+        Coordinator(streamManager: streamManager)
     }
     
     class Coordinator {
         weak var mapView: MapView?
+        let streamManager: StreamManager
         private var routeSourceAdded = false
+        private var timer: Timer?
         
+        init(streamManager: StreamManager) {
+            self.streamManager = streamManager
+            self.timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+                self?.snapshotMap()
+            }
+        }
+        
+        deinit {
+            timer?.invalidate()
+        }
+        
+        private func snapshotMap() {
+            guard let mapView = mapView else { return }
+            // Only capture if bounding box is valid
+            guard mapView.bounds.size.width > 0 else { return }
+            
+            UIGraphicsBeginImageContextWithOptions(mapView.bounds.size, false, 0.0)
+            mapView.drawHierarchy(in: mapView.bounds, afterScreenUpdates: false)
+            let image = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            
+            if let cgImage = image?.cgImage {
+                streamManager.updateMapImage(cgImage)
+            }
+        }
         func updateRoute(_ coordinates: [CLLocationCoordinate2D], on mapView: MapView) {
             guard coordinates.count >= 2 else { return }
             

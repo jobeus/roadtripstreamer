@@ -24,11 +24,13 @@ class RouteTracker: NSObject, ObservableObject {
     func startTracking() {
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
+        locationManager.startUpdatingHeading()
         isTracking = true
     }
     
     func stopTracking() {
         locationManager.stopUpdatingLocation()
+        locationManager.stopUpdatingHeading()
         isTracking = false
     }
     
@@ -50,6 +52,10 @@ extension RouteTracker: CLLocationManagerDelegate {
                 self.routeCoordinates.append(location.coordinate)
             }
         }
+    }
+    
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        // Mapbox automatically reads heading from CoreLocation when we call startUpdatingHeading!
     }
     
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

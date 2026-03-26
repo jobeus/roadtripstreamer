@@ -256,7 +256,8 @@ struct StreamView: View {
                 
                 MapOverlayView(
                     routeCoordinates: routeTracker.routeCoordinates,
-                    currentLocation: routeTracker.currentLocation
+                    currentLocation: routeTracker.currentLocation,
+                    streamManager: streamManager
                 )
                 .frame(width: 200, height: 150)
                 .cornerRadius(12)
