@@ -1,4 +1,4 @@
-import Foundation
+import UIKit
 import AVFoundation
 import HaishinKit
 import Combine
@@ -10,6 +10,15 @@ class StreamManager: NSObject, ObservableObject {
     
     @Published var isStreaming = false
     @Published var connectionStatus = "Disconnected"
+    
+    @Published var isFrontCameraMain: Bool = false {
+        didSet { updatePiP() }
+    }
+    @Published var pipCorner: Int = 3 { // 0: TL, 1: TR, 2: BL, 3: BR
+        didSet { updatePiP() }
+    }
+    
+    private var pipObject: VideoTrackScreenObject?
     
     override init() {
         self.stream = RTMPStream(connection: connection)
@@ -32,20 +41,71 @@ class StreamManager: NSObject, ObservableObject {
     }
     
     private func setupCameras() {
-        if let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
-            do {
-                try stream.attachCamera(camera)
-            } catch {
-                print("Failed to attach camera: \(error)")
-            }
+        // Enable multi-cam and offscreen rendering for PiP compositing
+        stream.isMultiCamSessionEnabled = true
+        stream.videoMixerSettings.mode = .offscreen
+        stream.videoSettings.videoSize = CGSize(width: 1280, height: 720) // Default 720p Landscape
+        
+        // Back camera (track 0)
+        if let back = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
+            stream.attachCamera(back, track: 0)
+        }
+        
+        // Front camera (track 1)
+        if let front = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
+            stream.attachCamera(front, track: 1)
         }
         
         if let mic = AVCaptureDevice.default(for: .audio) {
-            do {
-                try stream.attachAudio(mic)
-            } catch {
-                print("Failed to attach audio: \(error)")
-            }
+            stream.attachAudio(mic)
+        }
+        
+        // Add PiP object to screen
+        let pip = VideoTrackScreenObject()
+        // Ensure bounds are set, position will be updated in updatePiP
+        try? stream.screen.addChild(pip)
+        self.pipObject = pip
+        
+        updatePiP()
+    }
+    
+    private func updatePiP() {
+        guard let pip = pipObject else { return }
+        
+        // Swap tracks based on which is main
+        stream.videoMixerSettings.mainTrack = isFrontCameraMain ? 1 : 0
+        pip.track = isFrontCameraMain ? 0 : 1
+        
+        // Determine layout based on current video resolution
+        let w = stream.videoSettings.videoSize.width
+        let h = stream.videoSettings.videoSize.height
+        
+        let pipW = w * 0.25
+        let pipH = h * 0.25
+        
+        pip.size = CGSize(width: pipW, height: pipH)
+        
+        #if os(macOS)
+        pip.layoutMargin = NSEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
+        #else
+        pip.layoutMargin = UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
+        #endif
+        
+        // HaishinKit ScreenObject uses horizontal/vertical alignments
+        switch pipCorner {
+        case 0: // Top Left
+            pip.verticalAlignment = .top
+            pip.horizontalAlignment = .left
+        case 1: // Top Right
+            pip.verticalAlignment = .top
+            pip.horizontalAlignment = .right
+        case 2: // Bottom Left
+            pip.verticalAlignment = .bottom
+            pip.horizontalAlignment = .left
+        case 3: // Bottom Right
+            pip.verticalAlignment = .bottom
+            pip.horizontalAlignment = .right
+        default: break
         }
     }
     
@@ -53,8 +113,6 @@ class StreamManager: NSObject, ObservableObject {
         guard !isStreaming, !streamKey.isEmpty else { return }
         
         connectionStatus = "Connecting..."
-        // In basic streaming, the connection URL to Twitch is the rtmpURL,
-        // and when connect is successful, stream.publish(streamKey) is called.
         connection.connect(rtmpURL)
     }
     
@@ -87,3 +145,4 @@ class StreamManager: NSObject, ObservableObject {
         }
     }
 }
+

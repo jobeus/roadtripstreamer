@@ -46,8 +46,21 @@ struct StreamView: View {
                 Spacer()
                 
                 // Bottom Controls
-                HStack {
+                HStack(spacing: 20) {
+                    // PiP Corner Toggle
+                    Button(action: {
+                        streamManager.pipCorner = (streamManager.pipCorner + 1) % 4
+                    }) {
+                        Image(systemName: "pip.fill")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
+                    }
+                    
                     Spacer()
+                    
                     Button(action: {
                         if streamManager.isStreaming {
                             streamManager.stopStreaming()
@@ -62,10 +75,24 @@ struct StreamView: View {
                             .frame(minWidth: 150)
                             .background(streamManager.isStreaming ? Color.red : Color.blue)
                             .cornerRadius(25)
-                            .padding(.bottom, 20)
                     }
+                    
                     Spacer()
+                    
+                    // Camera Swap
+                    Button(action: {
+                        streamManager.isFrontCameraMain.toggle()
+                    }) {
+                        Image(systemName: "arrow.triangle.2.circlepath.camera")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
+                    }
                 }
+                .padding(.horizontal, 30)
+                .padding(.bottom, 20)
             }
         }
         .sheet(isPresented: $showingSettings) {
