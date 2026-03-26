@@ -15,13 +15,11 @@ class TwitchChatManager: ObservableObject {
     @Published var isConnected = false
     
     private var webSocketTask: URLSessionWebSocketTask?
-    private var channel: String = ""
+    private let channel = "scottywanders"
     private let maxMessages = 50
     private var shouldReconnect = false
     
-    func connect(to channel: String) {
-        guard !channel.isEmpty else { return }
-        self.channel = channel.lowercased().trimmingCharacters(in: .whitespaces)
+    func connect() {
         shouldReconnect = true
         openConnection()
     }
@@ -39,19 +37,21 @@ class TwitchChatManager: ObservableObject {
         webSocketTask = session.webSocketTask(with: url)
         webSocketTask?.resume()
         
-        // Anonymous login
+        // Anonymous login with tags capability for colors
         sendRaw("CAP REQ :twitch.tv/tags")
+        sendRaw("PASS SCHMOOPIIE")
         sendRaw("NICK justinfan\(Int.random(in: 10000...99999))")
         sendRaw("JOIN #\(channel)")
         
         isConnected = true
+        print("[Chat] Connecting to #\(channel)...")
         receiveMessage()
     }
     
     private func sendRaw(_ text: String) {
         webSocketTask?.send(.string(text)) { error in
             if let error {
-                print("WebSocket send error: \(error)")
+                print("[Chat] Send error: \(error)")
             }
         }
     }
@@ -69,13 +69,12 @@ class TwitchChatManager: ObservableObject {
                     default:
                         break
                     }
-                    self.receiveMessage() // Continue listening
+                    self.receiveMessage()
                     
                 case .failure(let error):
-                    print("WebSocket receive error: \(error)")
+                    print("[Chat] Receive error: \(error)")
                     self.isConnected = false
                     if self.shouldReconnect {
-                        // Reconnect after 3 seconds
                         try? await Task.sleep(nanoseconds: 3_000_000_000)
                         self.openConnection()
                     }
@@ -86,52 +85,64 @@ class TwitchChatManager: ObservableObject {
     
     private func handleIRC(_ raw: String) {
         for line in raw.components(separatedBy: "\r\n") where !line.isEmpty {
-            // Respond to PING to stay connected
+            print("[Chat] RAW: \(line)")
+            
             if line.hasPrefix("PING") {
                 sendRaw("PONG :tmi.twitch.tv")
                 continue
             }
             
-            // Parse PRIVMSG
             if line.contains("PRIVMSG") {
                 if let chatMsg = parsePRIVMSG(line) {
                     messages.append(chatMsg)
                     if messages.count > maxMessages {
                         messages.removeFirst()
                     }
+                    print("[Chat] \(chatMsg.username): \(chatMsg.message)")
                 }
             }
         }
     }
     
     private func parsePRIVMSG(_ line: String) -> ChatMessage? {
-        // Format: @tags :user!user@user.tmi.twitch.tv PRIVMSG #channel :message
-        var color = "#FFFFFF"
+        // Twitch IRC format with tags:
+        // @badge-info=...;color=#FF0000;display-name=User;... :user!user@user.tmi.twitch.tv PRIVMSG #channel :message text
         
-        // Extract color from tags
-        if let tagsEnd = line.firstIndex(of: " "), line.hasPrefix("@") {
-            let tags = String(line[line.index(after: line.startIndex)..<tagsEnd])
+        var color = "#FFFFFF"
+        var displayName = ""
+        
+        // 1. Extract tags (everything between @ and first space)
+        var remainder = line
+        if line.hasPrefix("@") {
+            guard let spaceIdx = line.firstIndex(of: " ") else { return nil }
+            let tags = String(line[line.index(after: line.startIndex)..<spaceIdx])
+            remainder = String(line[line.index(after: spaceIdx)...])
+            
             for tag in tags.components(separatedBy: ";") {
-                let parts = tag.components(separatedBy: "=")
-                if parts.count == 2 && parts[0] == "color" && !parts[1].isEmpty {
-                    color = parts[1]
+                let kv = tag.components(separatedBy: "=")
+                guard kv.count >= 2 else { continue }
+                switch kv[0] {
+                case "color":
+                    if !kv[1].isEmpty { color = kv[1] }
+                case "display-name":
+                    displayName = kv[1]
+                default:
+                    break
                 }
             }
         }
         
-        // Extract username
-        guard let userStart = line.firstIndex(of: ":"),
-              let userEnd = line.firstIndex(of: "!") else { return nil }
+        // 2. Extract username from :user!user@... prefix
+        // remainder looks like: :user!user@user.tmi.twitch.tv PRIVMSG #channel :message
+        guard remainder.hasPrefix(":") else { return nil }
+        guard let bangIdx = remainder.firstIndex(of: "!") else { return nil }
+        let username = displayName.isEmpty
+            ? String(remainder[remainder.index(after: remainder.startIndex)..<bangIdx])
+            : displayName
         
-        let afterTags = line[userStart...]
-        guard let realUserStart = afterTags.firstIndex(of: ":"),
-              let realUserEnd = afterTags.firstIndex(of: "!") else { return nil }
-        
-        let username = String(afterTags[afterTags.index(after: realUserStart)..<realUserEnd])
-        
-        // Extract message (everything after "PRIVMSG #channel :")
-        guard let privmsgRange = line.range(of: "PRIVMSG #\(channel) :") else { return nil }
-        let message = String(line[privmsgRange.upperBound...])
+        // 3. Extract message (everything after "PRIVMSG #channel :")
+        guard let msgRange = remainder.range(of: "PRIVMSG #\(channel) :") else { return nil }
+        let message = String(remainder[msgRange.upperBound...])
         
         return ChatMessage(
             username: username,

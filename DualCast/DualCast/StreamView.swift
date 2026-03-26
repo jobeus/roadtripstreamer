@@ -36,26 +36,12 @@ struct StreamView: View {
                 .environmentObject(appState)
         }
         .onChange(of: streamManager.isStreaming) { streaming in
-            if streaming && !appState.twitchChannelName.isEmpty {
-                chatManager.connect(to: appState.twitchChannelName)
-            } else if !streaming {
+            if streaming {
+                chatManager.connect()
+            } else {
                 chatManager.disconnect()
             }
         }
-        // Secret gesture: 3-finger triple-tap to ACTUALLY pause
-        .onTapGesture(count: 3) {
-            if isPanicMode {
-                isActuallyPaused.toggle()
-                if let rtmpStream = streamManager.stream as? RTMPStream {
-                    rtmpStream.paused = isActuallyPaused
-                }
-            }
-        }
-        // Use simultaneousGesture so it doesn't block other taps
-        .simultaneousGesture(
-            TapGesture(count: 3)
-                .simultaneously(with: TapGesture(count: 3))
-        )
     }
     
     // MARK: - Normal Controls
@@ -225,9 +211,14 @@ struct StreamView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 20) {
+                // Long-press the pause icon to ACTUALLY pause the stream
                 Image(systemName: "pause.circle.fill")
                     .font(.system(size: 80))
-                    .foregroundColor(.gray)
+                    .foregroundColor(isActuallyPaused ? .gray.opacity(0.4) : .gray)
+                    .onLongPressGesture(minimumDuration: 2.0) {
+                        isActuallyPaused.toggle()
+                        (streamManager.stream as? RTMPStream)?.paused = isActuallyPaused
+                    }
                 
                 Text("Stream Paused")
                     .font(.title)
@@ -237,25 +228,14 @@ struct StreamView: View {
                 Text("Tap to resume")
                     .font(.subheadline)
                     .foregroundColor(.gray.opacity(0.6))
-                
-                // Secret indicator: tiny dot shows if stream is ACTUALLY paused
-                if isActuallyPaused {
-                    Circle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 6, height: 6)
-                        .padding(.top, 20)
-                }
             }
         }
         .onTapGesture(count: 1) {
             // Single tap dismisses the fake overlay
             isPanicMode = false
-            // If we actually paused, resume the stream
             if isActuallyPaused {
                 isActuallyPaused = false
-                if let rtmpStream = streamManager.stream as? RTMPStream {
-                    rtmpStream.paused = false
-                }
+                (streamManager.stream as? RTMPStream)?.paused = false
             }
         }
     }
