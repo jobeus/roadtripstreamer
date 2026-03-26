@@ -63,7 +63,11 @@ class StreamManager: NSObject, ObservableObject {
     private func attachCameras() {
         let multiCamSupported = AVCaptureMultiCamSession.isMultiCamSupported
         stream.isMultiCamSessionEnabled = multiCamSupported
-        stream.videoSettings.videoSize = CGSize(width: 1280, height: 720) // Default 720p Landscape
+        stream.sessionPreset = .hd1280x720
+        stream.frameRate = 30
+        
+        let videoSize = CGSize(width: 1280, height: 720)
+        stream.videoSettings.videoSize = videoSize // Default 720p Landscape
         
         if multiCamSupported {
             stream.videoMixerSettings.mode = .offscreen
