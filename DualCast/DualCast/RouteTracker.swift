@@ -1,6 +1,7 @@
 import Foundation
 import CoreLocation
 import Combine
+import UIKit
 
 @MainActor
 class RouteTracker: NSObject, ObservableObject {
@@ -16,9 +17,41 @@ class RouteTracker: NSObject, ObservableObject {
         super.init()
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = minDistanceFilter
-        // locationManager.allowsBackgroundLocationUpdates = true
-        // locationManager.pausesLocationUpdatesAutomatically = false
         locationManager.delegate = self
+        
+        updateHeadingOrientation()
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(orientationChanged),
+            name: UIDevice.orientationDidChangeNotification,
+            object: nil
+        )
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc private func orientationChanged() {
+        updateHeadingOrientation()
+    }
+    
+    private func updateHeadingOrientation() {
+        let orientation = UIDevice.current.orientation
+        if orientation.isValidInterfaceOrientation {
+            switch orientation {
+            case .portrait:
+                locationManager.headingOrientation = .portrait
+            case .portraitUpsideDown:
+                locationManager.headingOrientation = .portraitUpsideDown
+            case .landscapeLeft:
+                locationManager.headingOrientation = .landscapeRight // UI landscapeLeft means device rotated right
+            case .landscapeRight:
+                locationManager.headingOrientation = .landscapeLeft  // UI landscapeRight means device rotated left
+            default: break
+            }
+        }
     }
     
     func startTracking() {
