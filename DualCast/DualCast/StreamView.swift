@@ -17,6 +17,17 @@ struct StreamView: View {
     
     var body: some View {
         ZStack {
+            // Invisible Map for snapshotting (must be in view hierarchy but hidden)
+            // It will be composited onto the stream and visible via HKViewRepresentation
+            MapOverlayView(
+                routeCoordinates: routeTracker.routeCoordinates,
+                currentLocation: routeTracker.currentLocation,
+                streamManager: streamManager
+            )
+            .frame(width: 256, height: 192) // 4:3 PiP size
+            .opacity(0.01) // Invisible to user, but still renders for snapshot
+            .allowsHitTesting(false)
+            
             // Background Camera Preview
             HKViewRepresentation(stream: streamManager.stream)
                 .ignoresSafeArea()
@@ -30,11 +41,6 @@ struct StreamView: View {
                 if showChat && !chatManager.messages.isEmpty {
                     chatOverlay
                 }
-                
-                // Map Overlay
-                if showMap {
-                    mapOverlay
-                }
             } else {
                 // === PANIC MODE: Fake "Paused" Screen ===
                 panicOverlay
@@ -43,6 +49,9 @@ struct StreamView: View {
         .sheet(isPresented: $showingSettings) {
             SettingsView()
                 .environmentObject(appState)
+        }
+        .onChange(of: showMap) { newValue in
+            streamManager.isMapVisible = newValue
         }
         .onChange(of: streamManager.isStreaming) { streaming in
             if streaming {
@@ -245,29 +254,6 @@ struct StreamView: View {
             }
             .padding(.leading, 16)
             .padding(.bottom, 70) // Above bottom controls
-        }
-    }
-    
-    // MARK: - Map Overlay
-    private var mapOverlay: some View {
-        VStack {
-            HStack {
-                Spacer()
-                
-                MapOverlayView(
-                    routeCoordinates: routeTracker.routeCoordinates,
-                    currentLocation: routeTracker.currentLocation,
-                    streamManager: streamManager
-                )
-                .frame(width: 200, height: 150)
-                .cornerRadius(12)
-                .opacity(0.85)
-                .shadow(color: .black.opacity(0.5), radius: 5)
-                .padding(.top, 50)
-                .padding(.trailing, 16)
-                .allowsHitTesting(false) // Don't intercept touches
-            }
-            Spacer()
         }
     }
     

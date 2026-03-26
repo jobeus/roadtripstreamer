@@ -22,6 +22,10 @@ class StreamManager: NSObject, ObservableObject {
         didSet { updatePiP() }
     }
     
+    @Published var isMapVisible: Bool = true {
+        didSet { mapObject?.isVisible = isMapVisible }
+    }
+    
     private var pipObject: VideoTrackScreenObject?
     private var mapObject: ImageScreenObject?
 
@@ -156,9 +160,8 @@ class StreamManager: NSObject, ObservableObject {
         
         // Position map overlay (top right by default for Twitch)
         if let map = mapObject {
-            let mapW = w * 0.20
-            let mapH = (mapW / 4.0) * 3.0 // 4:3 aspect
-            map.size = CGSize(width: mapW, height: mapH)
+            // Exact target size: 256x192 (20% of 1280)
+            map.size = CGSize(width: 256, height: 192)
             #if os(macOS)
             map.layoutMargin = NSEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
             #else
@@ -166,6 +169,7 @@ class StreamManager: NSObject, ObservableObject {
             #endif
             map.verticalAlignment = .top
             map.horizontalAlignment = .right
+            map.isVisible = isMapVisible
         }
     }
     

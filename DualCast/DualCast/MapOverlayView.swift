@@ -67,7 +67,8 @@ struct MapOverlayView: UIViewRepresentable {
             // Only capture if bounding box is valid
             guard mapView.bounds.size.width > 0 else { return }
             
-            UIGraphicsBeginImageContextWithOptions(mapView.bounds.size, false, 0.0)
+            // Use 1.0 scale so the output image pixel size exactly matches the stream bounds (e.g. 256x192)
+            UIGraphicsBeginImageContextWithOptions(mapView.bounds.size, false, 1.0)
             mapView.drawHierarchy(in: mapView.bounds, afterScreenUpdates: false)
             let image = UIGraphicsGetImageFromCurrentImageContext()
             UIGraphicsEndImageContext()
