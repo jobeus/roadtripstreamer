@@ -45,10 +45,29 @@ class StreamManager: NSObject, ObservableObject {
     }
     
     private func setupCameras() {
+        Task {
+            let videoAuth = await AVCaptureDevice.requestAccess(for: .video)
+            let audioAuth = await AVCaptureDevice.requestAccess(for: .audio)
+            
+            guard videoAuth && audioAuth else {
+                print("Camera/Mic permissions not granted.")
+                return
+            }
+            
+            await MainActor.run {
+                self.attachCameras()
+            }
+        }
+    }
+
+    private func attachCameras() {
         // Enable multi-cam and offscreen rendering for PiP compositing
         stream.isMultiCamSessionEnabled = true
         stream.videoMixerSettings.mode = .offscreen
         stream.videoSettings.videoSize = CGSize(width: 1280, height: 720) // Default 720p Landscape
+        
+        // Ensure the screen size matches the video resolution
+        stream.screen.size = stream.videoSettings.videoSize
         
         // Back camera (track 0)
         if let back = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
