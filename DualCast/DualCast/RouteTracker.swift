@@ -38,23 +38,38 @@ class RouteTracker: NSObject, ObservableObject {
     }
     
     private func updateHeadingOrientation() {
-        let orientation = UIDevice.current.orientation
-        if orientation.isValidInterfaceOrientation {
-            switch orientation {
-            case .portrait:
-                locationManager.headingOrientation = .portrait
-            case .portraitUpsideDown:
-                locationManager.headingOrientation = .portraitUpsideDown
-            case .landscapeLeft:
-                locationManager.headingOrientation = .landscapeRight // UI landscapeLeft means device rotated right
-            case .landscapeRight:
-                locationManager.headingOrientation = .landscapeLeft  // UI landscapeRight means device rotated left
-            default: break
+        var interfaceOrientation: UIInterfaceOrientation = .unknown
+        if let scene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive || $0.activationState == .foregroundInactive }) as? UIWindowScene {
+            interfaceOrientation = scene.interfaceOrientation
+        }
+        
+        var targetOrientation: CLDeviceOrientation = .portrait
+        if interfaceOrientation != .unknown {
+            switch interfaceOrientation {
+            case .portrait: targetOrientation = .portrait
+            case .portraitUpsideDown: targetOrientation = .portraitUpsideDown
+            case .landscapeLeft: targetOrientation = .landscapeRight // UI landscapeLeft means device rotated right
+            case .landscapeRight: targetOrientation = .landscapeLeft  // UI landscapeRight means device rotated left
+            @unknown default: break
+            }
+        } else {
+            let orientation = UIDevice.current.orientation
+            if orientation.isValidInterfaceOrientation {
+                switch orientation {
+                case .portrait: targetOrientation = .portrait
+                case .portraitUpsideDown: targetOrientation = .portraitUpsideDown
+                case .landscapeLeft: targetOrientation = .landscapeRight
+                case .landscapeRight: targetOrientation = .landscapeLeft
+                default: break
+                }
             }
         }
+        
+        locationManager.headingOrientation = targetOrientation
     }
     
     func startTracking() {
+        updateHeadingOrientation()
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
         locationManager.startUpdatingHeading()
