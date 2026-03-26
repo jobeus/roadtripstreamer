@@ -174,6 +174,9 @@ struct StreamView: View {
                         LazyVStack(alignment: .leading, spacing: 4) {
                             ForEach(chatManager.messages) { msg in
                                 HStack(alignment: .top, spacing: 4) {
+                                    Text(msg.timestamp, format: .dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits))
+                                        .font(.caption2)
+                                        .foregroundColor(.gray)
                                     Text(msg.username + ":")
                                         .font(.caption)
                                         .fontWeight(.bold)
