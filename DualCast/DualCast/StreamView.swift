@@ -119,7 +119,7 @@ struct HKViewRepresentation: UIViewRepresentable {
     let stream: RTMPStream
     
     func makeUIView(context: Context) -> MTHKView {
-        let view = MTHKView(frame: .zero)
+        let view = MTHKView(frame: UIScreen.main.bounds)
         view.videoGravity = AVLayerVideoGravity.resizeAspectFill
         view.attachStream(stream)
         return view

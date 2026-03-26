@@ -28,7 +28,6 @@ class StreamManager: NSObject, ObservableObject {
         self.stream = RTMPStream(connection: connection)
         super.init()
         
-        setupAudioSession()
         setupCameras()
         
         connection.addEventListener(.rtmpStatus, selector: #selector(rtmpStatusHandler), observer: self)
@@ -55,6 +54,7 @@ class StreamManager: NSObject, ObservableObject {
             }
             
             await MainActor.run {
+                self.setupAudioSession()
                 self.attachCameras()
             }
         }
