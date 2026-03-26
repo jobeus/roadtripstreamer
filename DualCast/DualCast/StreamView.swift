@@ -191,6 +191,17 @@ struct StreamView: View {
                                 .background(Color.black.opacity(0.5))
                                 .clipShape(Circle())
                         }
+                        
+                        Button(action: {
+                            streamManager.isPiPVisible.toggle()
+                        }) {
+                            Image(systemName: streamManager.isPiPVisible ? "person.2.fill" : "person.fill")
+                                .font(.title2)
+                                .foregroundColor(streamManager.isPiPVisible ? .white : .gray)
+                                .padding()
+                                .background(Color.black.opacity(0.5))
+                                .clipShape(Circle())
+                        }
                     }
                     
                     // Row 3: Go Live

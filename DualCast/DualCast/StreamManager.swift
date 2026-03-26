@@ -22,6 +22,10 @@ class StreamManager: NSObject, ObservableObject {
         didSet { updatePiP() }
     }
     
+    @Published var isPiPVisible: Bool = true {
+        didSet { updatePiP() }
+    }
+    
     @Published var isMapVisible: Bool = true {
         didSet { mapObject?.isVisible = isMapVisible }
     }
@@ -160,6 +164,8 @@ class StreamManager: NSObject, ObservableObject {
             pip.horizontalAlignment = .right
         default: break
         }
+        
+        pip.isVisible = isPiPVisible
         
         // Position map overlay (top right by default for Twitch)
         if let map = mapObject {
