@@ -7,6 +7,7 @@ struct StreamView: View {
     @StateObject private var streamManager = StreamManager()
     @StateObject private var chatManager = TwitchChatManager()
     @StateObject private var routeTracker = RouteTracker()
+    @StateObject private var thermalMonitor = ThermalMonitor()
     @State private var showingSettings = false
     @State private var showChat = true
     @State private var showMap = true
@@ -53,6 +54,9 @@ struct StreamView: View {
         .onChange(of: showMap) { newValue in
             streamManager.isMapVisible = newValue
         }
+        .onChange(of: appState.saveLocalRecording) { newValue in
+            streamManager.isRecordingEnabled = newValue
+        }
         .onChange(of: streamManager.isStreaming) { streaming in
             if streaming {
                 chatManager.connect()
@@ -82,6 +86,14 @@ struct StreamView: View {
                     Text("LIVE")
                         .font(.headline)
                         .foregroundColor(.white)
+                    
+                    if thermalMonitor.isCritical {
+                        Image(systemName: "flame.fill")
+                            .foregroundColor(.orange)
+                            .font(.title2)
+                            .padding(.leading, 8)
+                            .symbolEffect(.pulse, options: .repeating)
+                    }
                     
                     // Panic Mode button (only while live)
                     Button(action: { isPanicMode = true }) {

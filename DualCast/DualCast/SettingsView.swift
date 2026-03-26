@@ -12,8 +12,10 @@ struct SettingsView: View {
                     TextField("RTMP URL", text: $appState.rtmpURL)
                         .keyboardType(.URL)
                         .autocapitalization(.none)
-                    TextField("Twitch Channel Name", text: $appState.twitchChannelName)
-                        .autocapitalization(.none)
+                }
+                
+                Section(header: Text("Recording")) {
+                    Toggle("Save Local Copy (MP4)", isOn: $appState.saveLocalRecording)
                 }
                 
                 Section(header: Text("Instructions")) {

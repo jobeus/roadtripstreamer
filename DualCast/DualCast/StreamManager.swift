@@ -28,6 +28,9 @@ class StreamManager: NSObject, ObservableObject {
     
     private var pipObject: VideoTrackScreenObject?
     private var mapObject: ImageScreenObject?
+    
+    @Published var isRecordingEnabled: Bool = false
+    private let recorder = IOStreamRecorder()
 
     
     override init() {
@@ -203,12 +206,20 @@ class StreamManager: NSObject, ObservableObject {
                 self.connectionStatus = "Live"
                 self.isStreaming = true
                 self.stream.publish(UserDefaults.standard.string(forKey: "twitchStreamKey") ?? "")
+                if self.isRecordingEnabled {
+                    self.stream.addObserver(self.recorder)
+                    self.recorder.startRunning()
+                }
             case RTMPConnection.Code.connectClosed.rawValue:
                 self.connectionStatus = "Disconnected"
                 self.isStreaming = false
+                self.recorder.stopRunning()
+                self.stream.removeObserver(self.recorder)
             case RTMPConnection.Code.connectFailed.rawValue, RTMPConnection.Code.connectRejected.rawValue:
                 self.connectionStatus = "Failed"
                 self.isStreaming = false
+                self.recorder.stopRunning()
+                self.stream.removeObserver(self.recorder)
             default:
                 break
             }
