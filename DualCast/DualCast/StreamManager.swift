@@ -68,18 +68,17 @@ class StreamManager: NSObject, ObservableObject {
         
         if multiCamSupported {
             stream.isMultiCamSessionEnabled = true
+            stream.videoOrientation = .landscapeRight
             stream.videoMixerSettings.mode = .offscreen
             stream.screen.size = videoSize
             
             let pip = VideoTrackScreenObject()
-            // CRITICAL: Initialize track before adding to screen!
             pip.track = 1 
             self.pipObject = pip
-            updatePiP() // This configures bounds, alignments, and the correct tracks based on UI states
+            updatePiP()
             
             try? stream.screen.addChild(pip)
             
-            // Start the offscreen Metal compositing loop!
             stream.screen.startRunning()
             
             // Back camera (track 0)
@@ -89,7 +88,9 @@ class StreamManager: NSObject, ObservableObject {
             
             // Front camera (track 1)
             if let front = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
-                stream.attachCamera(front, track: 1)
+                stream.attachCamera(front, track: 1) { captureUnit, _ in
+                    captureUnit?.isVideoMirrored = true
+                }
             }
         } else {
             print("MultiCam not supported! Fallback to single camera.")
