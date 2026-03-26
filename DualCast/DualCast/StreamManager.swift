@@ -174,7 +174,9 @@ class StreamManager: NSObject, ObservableObject {
     }
     
     func updateMapImage(_ cgImage: CGImage?) {
-        mapObject?.cgImage = cgImage
+        stream.lockQueue.async { [weak self] in
+            self?.mapObject?.cgImage = cgImage
+        }
     }
     
     func startStreaming(rtmpURL: String, streamKey: String) {
