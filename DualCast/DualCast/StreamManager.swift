@@ -37,7 +37,7 @@ class StreamManager: NSObject, ObservableObject {
     private func setupAudioSession() {
         let session = AVAudioSession.sharedInstance()
         do {
-            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
+            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetoothHFP])
             try session.setActive(true)
         } catch {
             print("Audio session error: \(error)")
@@ -61,35 +61,40 @@ class StreamManager: NSObject, ObservableObject {
     }
 
     private func attachCameras() {
-        // Enable multi-cam and offscreen rendering for PiP compositing
-        stream.isMultiCamSessionEnabled = true
-        stream.videoMixerSettings.mode = .offscreen
+        let multiCamSupported = AVCaptureMultiCamSession.isMultiCamSupported
+        stream.isMultiCamSessionEnabled = multiCamSupported
         stream.videoSettings.videoSize = CGSize(width: 1280, height: 720) // Default 720p Landscape
         
-        // Ensure the screen size matches the video resolution
-        stream.screen.size = stream.videoSettings.videoSize
-        
-        // Back camera (track 0)
-        if let back = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
-            stream.attachCamera(back, track: 0)
-        }
-        
-        // Front camera (track 1)
-        if let front = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
-            stream.attachCamera(front, track: 1)
+        if multiCamSupported {
+            stream.videoMixerSettings.mode = .offscreen
+            stream.screen.size = stream.videoSettings.videoSize
+            
+            // Back camera (track 0)
+            if let back = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
+                stream.attachCamera(back, track: 0)
+            }
+            
+            // Front camera (track 1)
+            if let front = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
+                stream.attachCamera(front, track: 1)
+            }
+            
+            // Add PiP object to screen
+            let pip = VideoTrackScreenObject()
+            try? stream.screen.addChild(pip)
+            self.pipObject = pip
+            updatePiP()
+        } else {
+            print("Multi-cam is not supported on this device. Running in single-camera passthrough mode.")
+            stream.videoMixerSettings.mode = .passthrough
+            if let back = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
+                stream.attachCamera(back, track: 0)
+            }
         }
         
         if let mic = AVCaptureDevice.default(for: .audio) {
             stream.attachAudio(mic)
         }
-        
-        // Add PiP object to screen
-        let pip = VideoTrackScreenObject()
-        // Ensure bounds are set, position will be updated in updatePiP
-        try? stream.screen.addChild(pip)
-        self.pipObject = pip
-        
-        updatePiP()
     }
     
     private func updatePiP() {
