@@ -61,19 +61,43 @@ class StreamManager: NSObject, ObservableObject {
     }
 
     private func attachCameras() {
-        stream.videoMixerSettings.mode = .passthrough
-        stream.sessionPreset = .hd1280x720
+        let multiCamSupported = AVCaptureMultiCamSession.isMultiCamSupported
+        let videoSize = CGSize(width: 1280, height: 720) 
+        stream.videoSettings.videoSize = videoSize 
         stream.frameRate = 30
         
-        let videoSize = CGSize(width: 1280, height: 720)
-        stream.videoSettings.videoSize = videoSize 
-        
-        // Single Back Camera
-        if let back = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
-            stream.attachCamera(back, track: 0)
+        if multiCamSupported {
+            stream.isMultiCamSessionEnabled = true
+            stream.videoMixerSettings.mode = .offscreen
+            stream.screen.size = videoSize
+            
+            let pip = VideoTrackScreenObject()
+            // CRITICAL: Initialize track before adding to screen!
+            pip.track = 1 
+            self.pipObject = pip
+            updatePiP() // This configures bounds, alignments, and the correct tracks based on UI states
+            
+            try? stream.screen.addChild(pip)
+            
+            // Back camera (track 0)
+            if let back = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
+                stream.attachCamera(back, track: 0)
+            }
+            
+            // Front camera (track 1)
+            if let front = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
+                stream.attachCamera(front, track: 1)
+            }
+        } else {
+            print("MultiCam not supported! Fallback to single camera.")
+            stream.videoMixerSettings.mode = .passthrough
+            stream.sessionPreset = .hd1280x720
+            
+            if let back = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
+                stream.attachCamera(back, track: 0)
+            }
         }
         
-        // Single Mic
         if let mic = AVCaptureDevice.default(for: .audio) {
             stream.attachAudio(mic)
         }
