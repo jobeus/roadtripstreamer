@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CE12B6B62F75380900A26AD5 /* MapboxMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 6205DC109F1B9EAFD7E324BC /* MapboxMaps */; };
 		CEFBA33A2F7517F200D0FBA3 /* HaishinKit in Frameworks */ = {isa = PBXBuildFile; productRef = 575FD031DB35C037E057D453 /* HaishinKit */; };
 /* End PBXBuildFile section */
 
@@ -56,6 +57,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE12B6B62F75380900A26AD5 /* MapboxMaps in Frameworks */,
 				CEFBA33A2F7517F200D0FBA3 /* HaishinKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -118,6 +120,7 @@
 			name = DualCast;
 			packageProductDependencies = (
 				575FD031DB35C037E057D453 /* HaishinKit */,
+				6205DC109F1B9EAFD7E324BC /* MapboxMaps */,
 			);
 			productName = DualCast;
 			productReference = CEFBA30E2F75174300D0FBA3 /* DualCast.app */;
@@ -199,6 +202,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				6B6E70770979F6017070DE7F /* XCRemoteSwiftPackageReference "HaishinKit.swift" */,
+				BD8050077B6D4B890EBE240D /* XCRemoteSwiftPackageReference "mapbox-maps-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CEFBA30F2F75174300D0FBA3 /* Products */;
@@ -406,6 +410,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "DualCast needs camera access to stream your road trip.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DualCast needs location access to track your route while streaming.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DualCast needs location access to show your route on the map.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "DualCast needs microphone access to capture streaming audio.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -441,6 +447,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "DualCast needs camera access to stream your road trip.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DualCast needs location access to track your route while streaming.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DualCast needs location access to show your route on the map.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "DualCast needs microphone access to capture streaming audio.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -619,6 +627,14 @@
 				minimumVersion = 1.9.0;
 			};
 		};
+		BD8050077B6D4B890EBE240D /* XCRemoteSwiftPackageReference "mapbox-maps-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mapbox/mapbox-maps-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -626,6 +642,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 6B6E70770979F6017070DE7F /* XCRemoteSwiftPackageReference "HaishinKit.swift" */;
 			productName = HaishinKit;
+		};
+		6205DC109F1B9EAFD7E324BC /* MapboxMaps */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BD8050077B6D4B890EBE240D /* XCRemoteSwiftPackageReference "mapbox-maps-ios" */;
+			productName = MapboxMaps;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

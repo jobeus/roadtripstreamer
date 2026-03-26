@@ -46,6 +46,7 @@ playground.xcworkspace
 # Environment / Secrets (for Mapbox token, Twitch keys, etc.)
 *.env
 Secrets.xcconfig
+Secrets.swift
 Keys.plist
 
 # Crashlytics or other generated logs

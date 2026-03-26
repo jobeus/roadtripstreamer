@@ -6,8 +6,10 @@ struct StreamView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var streamManager = StreamManager()
     @StateObject private var chatManager = TwitchChatManager()
+    @StateObject private var routeTracker = RouteTracker()
     @State private var showingSettings = false
     @State private var showChat = true
+    @State private var showMap = true
     @State private var isPanicMode = false
     @State private var isActuallyPaused = false
     @State private var panicBlink = false
@@ -28,6 +30,11 @@ struct StreamView: View {
                 if showChat && !chatManager.messages.isEmpty {
                     chatOverlay
                 }
+                
+                // Map Overlay
+                if showMap {
+                    mapOverlay
+                }
             } else {
                 // === PANIC MODE: Fake "Paused" Screen ===
                 panicOverlay
@@ -40,12 +47,17 @@ struct StreamView: View {
         .onChange(of: streamManager.isStreaming) { streaming in
             if streaming {
                 chatManager.connect()
+                routeTracker.startTracking()
             } else {
                 chatManager.disconnect()
+                routeTracker.stopTracking()
             }
         }
         .onChange(of: chatManager.messages.count) { _ in
             if !showChat { unreadChat += 1 }
+        }
+        .onAppear {
+            routeTracker.startTracking()
         }
     }
     
@@ -108,6 +120,15 @@ struct StreamView: View {
                     }
                 }
                 
+                // Map toggle
+                Button(action: { showMap.toggle() }) {
+                    Image(systemName: showMap ? "map.fill" : "map")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.black.opacity(0.5))
+                        .clipShape(Circle())
+                }
                 Button(action: { showingSettings.toggle() }) {
                     Image(systemName: "gear")
                         .font(.title2)
@@ -224,6 +245,28 @@ struct StreamView: View {
             }
             .padding(.leading, 16)
             .padding(.bottom, 70) // Above bottom controls
+        }
+    }
+    
+    // MARK: - Map Overlay
+    private var mapOverlay: some View {
+        VStack {
+            HStack {
+                Spacer()
+                
+                MapOverlayView(
+                    routeCoordinates: routeTracker.routeCoordinates,
+                    currentLocation: routeTracker.currentLocation
+                )
+                .frame(width: 200, height: 150)
+                .cornerRadius(12)
+                .opacity(0.85)
+                .shadow(color: .black.opacity(0.5), radius: 5)
+                .padding(.top, 50)
+                .padding(.trailing, 16)
+                .allowsHitTesting(false) // Don't intercept touches
+            }
+            Spacer()
         }
     }
     
