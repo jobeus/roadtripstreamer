@@ -16,8 +16,8 @@ class RouteTracker: NSObject, ObservableObject {
         super.init()
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = minDistanceFilter
-        locationManager.allowsBackgroundLocationUpdates = true
-        locationManager.pausesLocationUpdatesAutomatically = false
+        // locationManager.allowsBackgroundLocationUpdates = true
+        // locationManager.pausesLocationUpdatesAutomatically = false
         locationManager.delegate = self
     }
     
