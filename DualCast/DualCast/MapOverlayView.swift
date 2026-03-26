@@ -23,8 +23,10 @@ struct MapOverlayView: UIViewRepresentable {
         mapView.ornaments.options.compass.visibility = .hidden
         mapView.ornaments.options.scaleBar.visibility = .hidden
         
-        // Enable location puck
+        // Enable location puck and heading rotation
         mapView.location.options.puckType = .puck2D(.makeDefault(showBearing: true))
+        mapView.location.options.puckBearingEnabled = true
+        mapView.location.options.puckBearing = .heading
         
         context.coordinator.mapView = mapView
         
