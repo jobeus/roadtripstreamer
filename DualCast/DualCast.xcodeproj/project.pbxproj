@@ -36,22 +36,16 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CEFBA3102F75174300D0FBA3 /* DualCast */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = DualCast;
 			sourceTree = "<group>";
 		};
 		CEFBA3202F75174400D0FBA3 /* DualCastTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = DualCastTests;
 			sourceTree = "<group>";
 		};
 		CEFBA32A2F75174400D0FBA3 /* DualCastUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = DualCastUITests;
 			sourceTree = "<group>";
 		};

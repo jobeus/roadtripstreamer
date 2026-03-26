@@ -12,6 +12,8 @@ struct SettingsView: View {
                     TextField("RTMP URL", text: $appState.rtmpURL)
                         .keyboardType(.URL)
                         .autocapitalization(.none)
+                    TextField("Twitch Channel Name", text: $appState.twitchChannelName)
+                        .autocapitalization(.none)
                 }
                 
                 Section(header: Text("Instructions")) {
