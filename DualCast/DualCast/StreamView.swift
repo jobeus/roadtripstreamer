@@ -117,94 +117,87 @@ struct StreamView: View {
             
             Spacer() // Pushes everything else to the bottom
             
-            // Bottom Controls (ALL BOTTOM LEFT)
-            HStack {
-                VStack(alignment: .leading, spacing: 15) {
-                    // Row 1: Chat, Map, Settings
-                    HStack(spacing: 15) {
-                        if streamManager.isStreaming {
-                            Button(action: {
-                                showChat.toggle()
-                                if showChat { unreadChat = 0 }
-                            }) {
-                                ZStack(alignment: .topTrailing) {
-                                    Image(systemName: showChat ? "bubble.left.fill" : "bubble.left")
-                                        .font(.title2)
+            // Bottom Controls (ALL BOTTOM ROW)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 15) {
+                    if streamManager.isStreaming {
+                        Button(action: {
+                            showChat.toggle()
+                            if showChat { unreadChat = 0 }
+                        }) {
+                            ZStack(alignment: .topTrailing) {
+                                Image(systemName: showChat ? "bubble.left.fill" : "bubble.left")
+                                    .font(.title2)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .background(Color.black.opacity(0.5))
+                                    .clipShape(Circle())
+                                
+                                if !showChat && unreadChat > 0 {
+                                    Text("\(min(unreadChat, 99))")
+                                        .font(.caption2)
+                                        .fontWeight(.bold)
                                         .foregroundColor(.white)
-                                        .padding()
-                                        .background(Color.black.opacity(0.5))
+                                        .padding(4)
+                                        .background(Color.red)
                                         .clipShape(Circle())
-                                    
-                                    if !showChat && unreadChat > 0 {
-                                        Text("\(min(unreadChat, 99))")
-                                            .font(.caption2)
-                                            .fontWeight(.bold)
-                                            .foregroundColor(.white)
-                                            .padding(4)
-                                            .background(Color.red)
-                                            .clipShape(Circle())
-                                            .offset(x: 4, y: -4)
-                                    }
+                                        .offset(x: 4, y: -4)
                                 }
                             }
                         }
-                        
-                        Button(action: { showMap.toggle() }) {
-                            Image(systemName: showMap ? "map.fill" : "map")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.black.opacity(0.5))
-                                .clipShape(Circle())
-                        }
-                        
-                        Button(action: { showingSettings.toggle() }) {
-                            Image(systemName: "gear")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.black.opacity(0.5))
-                                .clipShape(Circle())
-                        }
                     }
                     
-                    // Row 2: Mute, Swap Camera
-                    HStack(spacing: 15) {
-                        Button(action: {
-                            streamManager.isMuted.toggle()
-                        }) {
-                            Image(systemName: streamManager.isMuted ? "mic.slash.fill" : "mic.fill")
-                                .font(.title2)
-                                .foregroundColor(streamManager.isMuted ? .red : .white)
-                                .padding()
-                                .background(Color.black.opacity(0.5))
-                                .clipShape(Circle())
-                        }
-                        
-                        Button(action: {
-                            streamManager.isFrontCameraMain.toggle()
-                        }) {
-                            Image(systemName: "arrow.triangle.2.circlepath.camera")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.black.opacity(0.5))
-                                .clipShape(Circle())
-                        }
-                        
-                        Button(action: {
-                            streamManager.isPiPVisible.toggle()
-                        }) {
-                            Image(systemName: streamManager.isPiPVisible ? "person.2.fill" : "person.fill")
-                                .font(.title2)
-                                .foregroundColor(streamManager.isPiPVisible ? .white : .gray)
-                                .padding()
-                                .background(Color.black.opacity(0.5))
-                                .clipShape(Circle())
-                        }
+                    Button(action: { showMap.toggle() }) {
+                        Image(systemName: showMap ? "map.fill" : "map")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
                     }
                     
-                    // Row 3: Go Live
+                    Button(action: { showingSettings.toggle() }) {
+                        Image(systemName: "gear")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
+                    }
+                    
+                    Button(action: {
+                        streamManager.isMuted.toggle()
+                    }) {
+                        Image(systemName: streamManager.isMuted ? "mic.slash.fill" : "mic.fill")
+                            .font(.title2)
+                            .foregroundColor(streamManager.isMuted ? .red : .white)
+                            .padding()
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
+                    }
+                    
+                    Button(action: {
+                        streamManager.isFrontCameraMain.toggle()
+                    }) {
+                        Image(systemName: "arrow.triangle.2.circlepath.camera")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
+                    }
+                    
+                    Button(action: {
+                        streamManager.isPiPVisible.toggle()
+                    }) {
+                        Image(systemName: streamManager.isPiPVisible ? "person.2.fill" : "person.fill")
+                            .font(.title2)
+                            .foregroundColor(streamManager.isPiPVisible ? .white : .gray)
+                            .padding()
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
+                    }
+                    
                     Button(action: {
                         if streamManager.isStreaming {
                             streamManager.stopStreaming()
@@ -215,17 +208,15 @@ struct StreamView: View {
                         Text(streamManager.isStreaming ? "STOP STREAM" : "GO LIVE")
                             .font(.headline)
                             .foregroundColor(.white)
-                            .padding()
-                            .frame(minWidth: 150)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 14)
                             .background(streamManager.isStreaming ? Color.red : Color.blue)
                             .cornerRadius(25)
                     }
                 }
-                
-                Spacer() // Pushes the VSTACK to the left, leaving the bottom-right clear for PiP!
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 20)
         }
     }
     
