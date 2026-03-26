@@ -111,117 +111,109 @@ struct StreamView: View {
                         .foregroundColor(.white)
                 }
                 
-                Spacer()
-                
-                // Chat toggle (only while streaming)
-                if streamManager.isStreaming {
-                    Button(action: {
-                        showChat.toggle()
-                        if showChat { unreadChat = 0 }
-                    }) {
-                        ZStack(alignment: .topTrailing) {
-                            Image(systemName: showChat ? "bubble.left.fill" : "bubble.left")
+                Spacer() // Pushes the top-bar items to the left
+            }
+            .padding()
+            
+            Spacer() // Pushes everything else to the bottom
+            
+            // Bottom Controls (ALL BOTTOM LEFT)
+            HStack {
+                VStack(alignment: .leading, spacing: 15) {
+                    // Row 1: Chat, Map, Settings
+                    HStack(spacing: 15) {
+                        if streamManager.isStreaming {
+                            Button(action: {
+                                showChat.toggle()
+                                if showChat { unreadChat = 0 }
+                            }) {
+                                ZStack(alignment: .topTrailing) {
+                                    Image(systemName: showChat ? "bubble.left.fill" : "bubble.left")
+                                        .font(.title2)
+                                        .foregroundColor(.white)
+                                        .padding()
+                                        .background(Color.black.opacity(0.5))
+                                        .clipShape(Circle())
+                                    
+                                    if !showChat && unreadChat > 0 {
+                                        Text("\(min(unreadChat, 99))")
+                                            .font(.caption2)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.white)
+                                            .padding(4)
+                                            .background(Color.red)
+                                            .clipShape(Circle())
+                                            .offset(x: 4, y: -4)
+                                    }
+                                }
+                            }
+                        }
+                        
+                        Button(action: { showMap.toggle() }) {
+                            Image(systemName: showMap ? "map.fill" : "map")
                                 .font(.title2)
                                 .foregroundColor(.white)
                                 .padding()
                                 .background(Color.black.opacity(0.5))
                                 .clipShape(Circle())
-                            
-                            if !showChat && unreadChat > 0 {
-                                Text("\(min(unreadChat, 99))")
-                                    .font(.caption2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                                    .padding(4)
-                                    .background(Color.red)
-                                    .clipShape(Circle())
-                                    .offset(x: 4, y: -4)
-                            }
+                        }
+                        
+                        Button(action: { showingSettings.toggle() }) {
+                            Image(systemName: "gear")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.black.opacity(0.5))
+                                .clipShape(Circle())
                         }
                     }
-                }
-                
-                // Map toggle
-                Button(action: { showMap.toggle() }) {
-                    Image(systemName: showMap ? "map.fill" : "map")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.black.opacity(0.5))
-                        .clipShape(Circle())
-                }
-                Button(action: { showingSettings.toggle() }) {
-                    Image(systemName: "gear")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.black.opacity(0.5))
-                        .clipShape(Circle())
-                }
-            }
-            .padding()
-            
-            Spacer()
-            
-            // Bottom Controls
-            HStack(spacing: 20) {
-                // Mute Toggle
-                Button(action: {
-                    streamManager.isMuted.toggle()
-                }) {
-                    Image(systemName: streamManager.isMuted ? "mic.slash.fill" : "mic.fill")
-                        .font(.title2)
-                        .foregroundColor(streamManager.isMuted ? .red : .white)
-                        .padding()
-                        .background(Color.black.opacity(0.5))
-                        .clipShape(Circle())
-                }
-                
-                // PiP Corner Toggle
-                Button(action: {
-                    streamManager.pipCorner = (streamManager.pipCorner + 1) % 4
-                }) {
-                    Image(systemName: "pip.fill")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.black.opacity(0.5))
-                        .clipShape(Circle())
-                }
-                
-                Spacer()
-                
-                Button(action: {
-                    if streamManager.isStreaming {
-                        streamManager.stopStreaming()
-                    } else {
-                        streamManager.startStreaming(rtmpURL: appState.rtmpURL, streamKey: appState.twitchStreamKey)
+                    
+                    // Row 2: Mute, Swap Camera
+                    HStack(spacing: 15) {
+                        Button(action: {
+                            streamManager.isMuted.toggle()
+                        }) {
+                            Image(systemName: streamManager.isMuted ? "mic.slash.fill" : "mic.fill")
+                                .font(.title2)
+                                .foregroundColor(streamManager.isMuted ? .red : .white)
+                                .padding()
+                                .background(Color.black.opacity(0.5))
+                                .clipShape(Circle())
+                        }
+                        
+                        Button(action: {
+                            streamManager.isFrontCameraMain.toggle()
+                        }) {
+                            Image(systemName: "arrow.triangle.2.circlepath.camera")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.black.opacity(0.5))
+                                .clipShape(Circle())
+                        }
                     }
-                }) {
-                    Text(streamManager.isStreaming ? "STOP STREAM" : "GO LIVE")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(minWidth: 150)
-                        .background(streamManager.isStreaming ? Color.red : Color.blue)
-                        .cornerRadius(25)
+                    
+                    // Row 3: Go Live
+                    Button(action: {
+                        if streamManager.isStreaming {
+                            streamManager.stopStreaming()
+                        } else {
+                            streamManager.startStreaming(rtmpURL: appState.rtmpURL, streamKey: appState.twitchStreamKey)
+                        }
+                    }) {
+                        Text(streamManager.isStreaming ? "STOP STREAM" : "GO LIVE")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(minWidth: 150)
+                            .background(streamManager.isStreaming ? Color.red : Color.blue)
+                            .cornerRadius(25)
+                    }
                 }
                 
-                Spacer()
-                
-                // Camera Swap
-                Button(action: {
-                    streamManager.isFrontCameraMain.toggle()
-                }) {
-                    Image(systemName: "arrow.triangle.2.circlepath.camera")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.black.opacity(0.5))
-                        .clipShape(Circle())
-                }
+                Spacer() // Pushes the VSTACK to the left, leaving the bottom-right clear for PiP!
             }
-            .padding(.horizontal, 30)
+            .padding(.horizontal, 20)
             .padding(.bottom, 20)
         }
     }
