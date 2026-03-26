@@ -215,23 +215,24 @@ struct StreamView: View {
                 Image(systemName: "pause.circle.fill")
                     .font(.system(size: 80))
                     .foregroundColor(isActuallyPaused ? .gray.opacity(0.4) : .gray)
-                    .onLongPressGesture(minimumDuration: 2.0) {
-                        isActuallyPaused.toggle()
-                        (streamManager.stream as? RTMPStream)?.paused = isActuallyPaused
-                    }
                 
                 Text("Stream Paused")
                     .font(.title)
                     .fontWeight(.semibold)
                     .foregroundColor(.gray)
                 
-                Text("Tap to resume")
+                Text("Double-tap to resume")
                     .font(.subheadline)
                     .foregroundColor(.gray.opacity(0.6))
             }
         }
-        .onTapGesture(count: 1) {
-            // Single tap dismisses the fake overlay
+        // Long-press anywhere = ACTUALLY pause the stream (secret)
+        .onLongPressGesture(minimumDuration: 2.0) {
+            isActuallyPaused.toggle()
+            (streamManager.stream as? RTMPStream)?.paused = isActuallyPaused
+        }
+        // Double-tap = dismiss the fake overlay
+        .onTapGesture(count: 2) {
             isPanicMode = false
             if isActuallyPaused {
                 isActuallyPaused = false
