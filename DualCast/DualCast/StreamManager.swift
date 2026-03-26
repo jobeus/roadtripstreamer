@@ -79,6 +79,9 @@ class StreamManager: NSObject, ObservableObject {
             
             try? stream.screen.addChild(pip)
             
+            // Start the offscreen Metal compositing loop!
+            stream.screen.startRunning()
+            
             // Back camera (track 0)
             if let back = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
                 stream.attachCamera(back, track: 0)
