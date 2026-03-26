@@ -11,6 +11,7 @@ struct StreamView: View {
     @State private var isPanicMode = false
     @State private var isActuallyPaused = false
     @State private var panicBlink = false
+    @State private var unreadChat = 0
     
     var body: some View {
         ZStack {
@@ -42,6 +43,9 @@ struct StreamView: View {
             } else {
                 chatManager.disconnect()
             }
+        }
+        .onChange(of: chatManager.messages.count) { _ in
+            if !showChat { unreadChat += 1 }
         }
     }
     
@@ -78,13 +82,29 @@ struct StreamView: View {
                 
                 // Chat toggle (only while streaming)
                 if streamManager.isStreaming {
-                    Button(action: { showChat.toggle() }) {
-                        Image(systemName: showChat ? "bubble.left.fill" : "bubble.left")
-                            .font(.title2)
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.black.opacity(0.5))
-                            .clipShape(Circle())
+                    Button(action: {
+                        showChat.toggle()
+                        if showChat { unreadChat = 0 }
+                    }) {
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: showChat ? "bubble.left.fill" : "bubble.left")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.black.opacity(0.5))
+                                .clipShape(Circle())
+                            
+                            if !showChat && unreadChat > 0 {
+                                Text("\(min(unreadChat, 99))")
+                                    .font(.caption2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                                    .padding(4)
+                                    .background(Color.red)
+                                    .clipShape(Circle())
+                                    .offset(x: 4, y: -4)
+                            }
+                        }
                     }
                 }
                 
