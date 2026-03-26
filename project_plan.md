@@ -253,8 +253,8 @@ If feasible, simultaneously record to local device storage (Camera Roll or app d
 
 ## Build & Run
 
-- Xcode 16+
-- iOS 17.0+ deployment target
+- Xcode 26.4+
+- iOS 26.4+ deployment target
 - Real device required (multi-camera doesn't work in simulator)
 - You'll need a Twitch account with a stream key and a Mapbox access token to test
 
