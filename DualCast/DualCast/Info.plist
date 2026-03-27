@@ -7,5 +7,9 @@
 		<string>audio</string>
 		<string>location</string>
 	</array>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UIUserInterfaceStyle</key>
+	<string>Dark</string>
 </dict>
 </plist>

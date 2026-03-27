@@ -36,6 +36,8 @@ class StreamManager: NSObject, ObservableObject {
     private var pipObject: VideoTrackScreenObject?
     private var mapObject: ImageScreenObject?
     
+    @Published var isCameraReady: Bool = false
+    
     // Background Paused Video Generator
     private var backgroundGenerator: BackgroundFrameGenerator?
     
@@ -54,8 +56,6 @@ class StreamManager: NSObject, ObservableObject {
         self.stream = RTMPStream(connection: connection)
         super.init()
         
-        setupCameras()
-        
         connection.addEventListener(.rtmpStatus, selector: #selector(rtmpStatusHandler), observer: self)
         
         backgroundGenerator = BackgroundFrameGenerator(stream: stream)
@@ -71,20 +71,18 @@ class StreamManager: NSObject, ObservableObject {
         }
     }
     
-    private func setupCameras() {
-        Task {
-            let videoAuth = await AVCaptureDevice.requestAccess(for: .video)
-            let audioAuth = await AVCaptureDevice.requestAccess(for: .audio)
+    func initializeCameras() async {
+        let videoAuth = await AVCaptureDevice.requestAccess(for: .video)
+        let audioAuth = await AVCaptureDevice.requestAccess(for: .audio)
             
             guard videoAuth && audioAuth else {
                 print("Camera/Mic permissions not granted.")
-                return
-            }
-            
-            await MainActor.run {
-                self.setupAudioSession()
-                self.attachCameras()
-            }
+            return
+        }
+        
+        await MainActor.run {
+            self.setupAudioSession()
+            self.attachCameras()
         }
     }
 
@@ -150,6 +148,9 @@ class StreamManager: NSObject, ObservableObject {
         if let mic = AVCaptureDevice.default(for: .audio) {
             stream.attachAudio(mic)
         }
+        
+        // Signal that the UI and streams are ready
+        self.isCameraReady = true
     }
     
     private func handleBackgroundStateChange() {
