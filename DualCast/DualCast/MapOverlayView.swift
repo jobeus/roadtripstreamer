@@ -97,8 +97,8 @@ struct MapOverlayView: UIViewRepresentable {
         
         private func snapshotMap() {
             guard let mapView = mapView else { return }
-            // Only capture if bounding box is valid
-            guard mapView.bounds.size.width > 0 else { return }
+            // Only capture if bounding box is valid and map is actively visible (prevents PiP unresponsiveness in background)
+            guard mapView.bounds.size.width > 0, mapView.window != nil else { return }
             
             // Use UIGraphicsImageRenderer for more efficient, modern rendering
             let format = UIGraphicsImageRendererFormat()
