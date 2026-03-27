@@ -84,6 +84,13 @@ class StreamManager: NSObject, ObservableObject {
         
         if multiCamSupported {
             stream.isMultiCamSessionEnabled = true
+            
+            stream.configuration { session in
+                if #available(iOS 16.0, *) {
+                    session.isMultitaskingCameraAccessEnabled = true
+                }
+            }
+            
             stream.videoOrientation = .landscapeRight
             stream.videoMixerSettings.mode = .offscreen
             stream.screen.size = videoSize

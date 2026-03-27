@@ -4,6 +4,7 @@ import AVFoundation
 
 struct StreamView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var streamManager = StreamManager()
     @StateObject private var chatManager = TwitchChatManager()
     @StateObject private var routeTracker = RouteTracker()
@@ -23,7 +24,8 @@ struct StreamView: View {
             MapOverlayView(
                 routeCoordinates: routeTracker.routeCoordinates,
                 currentLocation: routeTracker.currentLocation,
-                streamManager: streamManager
+                streamManager: streamManager,
+                isAppBackgrounded: scenePhase == .background
             )
             .frame(width: 256, height: 192) // 4:3 PiP size
             .opacity(0.01) // Invisible to user, but still renders for snapshot

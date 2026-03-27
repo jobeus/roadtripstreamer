@@ -5,6 +5,7 @@ struct MapOverlayView: UIViewRepresentable {
     let routeCoordinates: [CLLocationCoordinate2D]
     let currentLocation: CLLocationCoordinate2D?
     @ObservedObject var streamManager: StreamManager
+    var isAppBackgrounded: Bool
     
     func makeUIView(context: Context) -> MapView {
         // Set access token before creating MapView
@@ -49,6 +50,10 @@ struct MapOverlayView: UIViewRepresentable {
     }
     
     func updateUIView(_ mapView: MapView, context: Context) {
+        // Halt heavy Metal rendering while backgrounded to prevent freezing
+        mapView.isHidden = isAppBackgrounded
+        context.coordinator.isAppBackgrounded = isAppBackgrounded
+        
         if let label = mapView.viewWithTag(999) as? UILabel {
             if let cityState = streamManager.currentCityState {
                 label.text = " \(cityState) "
@@ -81,6 +86,7 @@ struct MapOverlayView: UIViewRepresentable {
     class Coordinator {
         weak var mapView: MapView?
         let streamManager: StreamManager
+        var isAppBackgrounded = false
         private var routeSourceAdded = false
         private var timer: Timer?
         
@@ -96,6 +102,7 @@ struct MapOverlayView: UIViewRepresentable {
         }
         
         private func snapshotMap() {
+            guard !isAppBackgrounded else { return }
             guard let mapView = mapView else { return }
             // Only capture if bounding box is valid and map is actively visible (prevents PiP unresponsiveness in background)
             guard mapView.bounds.size.width > 0, mapView.window != nil else { return }
