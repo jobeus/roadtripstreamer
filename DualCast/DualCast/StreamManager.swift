@@ -186,8 +186,9 @@ class StreamManager: NSObject, ObservableObject {
     }
     
     func updateMapImage(_ cgImage: CGImage?) {
-        stream.lockQueue.async { [weak self] in
-            self?.mapObject?.cgImage = cgImage
+        guard let mapObject = self.mapObject else { return }
+        stream.lockQueue.async {
+            mapObject.cgImage = cgImage
         }
     }
     

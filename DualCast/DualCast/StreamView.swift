@@ -68,16 +68,16 @@ struct StreamView: View {
                 .environmentObject(appState)
                 .environmentObject(routeTracker)
         }
-        .onChange(of: routeTracker.currentCityState) { newValue in
+        .onChange(of: routeTracker.currentCityState) { _, newValue in
             streamManager.currentCityState = newValue
         }
-        .onChange(of: showMap) { newValue in
+        .onChange(of: showMap) { _, newValue in
             streamManager.isMapVisible = newValue
         }
-        .onChange(of: appState.saveLocalRecording) { newValue in
+        .onChange(of: appState.saveLocalRecording) { _, newValue in
             streamManager.isRecordingEnabled = newValue
         }
-        .onChange(of: streamManager.isStreaming) { streaming in
+        .onChange(of: streamManager.isStreaming) { _, streaming in
             if streaming {
                 chatManager.connect()
                 routeTracker.startTracking()
@@ -86,7 +86,7 @@ struct StreamView: View {
                 routeTracker.stopTracking()
             }
         }
-        .onChange(of: chatManager.messages.count) { _ in
+        .onChange(of: chatManager.messages.count) { _, _ in
             if !showChat { unreadChat += 1 }
         }
         .onAppear {
@@ -266,7 +266,7 @@ struct StreamView: View {
                         }
                         .padding(8)
                     }
-                    .onChange(of: chatManager.messages.count) { _ in
+                    .onChange(of: chatManager.messages.count) { _, _ in
                         if let last = chatManager.messages.last {
                             proxy.scrollTo(last.id, anchor: .bottom)
                         }
@@ -305,21 +305,21 @@ struct StreamView: View {
                     .font(.subheadline)
                     .foregroundColor(.white.opacity(0.4))
             }
-            .onChange(of: isActuallyPaused) { paused in
+            .onChange(of: isActuallyPaused) { _, paused in
                 panicBlink = paused
             }
         }
         // Long-press anywhere = ACTUALLY pause the stream (secret)
         .onLongPressGesture(minimumDuration: 2.0) {
             isActuallyPaused.toggle()
-            (streamManager.stream as? RTMPStream)?.paused = isActuallyPaused
+            streamManager.stream.paused = isActuallyPaused
         }
         // Double-tap = dismiss the fake overlay
         .onTapGesture(count: 2) {
             isPanicMode = false
             if isActuallyPaused {
                 isActuallyPaused = false
-                (streamManager.stream as? RTMPStream)?.paused = false
+                streamManager.stream.paused = false
             }
         }
     }
@@ -343,7 +343,7 @@ struct HKViewRepresentation: UIViewRepresentable {
     let stream: RTMPStream
     
     func makeUIView(context: Context) -> MTHKView {
-        let view = MTHKView(frame: UIScreen.main.bounds)
+        let view = MTHKView(frame: .zero)
         view.videoGravity = AVLayerVideoGravity.resizeAspectFill
         view.attachStream(stream)
         return view

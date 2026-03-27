@@ -62,7 +62,7 @@ struct MapOverlayView: UIViewRepresentable {
             if routeCoordinates.count == 1 {
                 mapView.camera.ease(to: CameraOptions(center: routeCoordinates[0], zoom: 14), duration: 1.0)
             } else {
-                let camera = mapView.mapboxMap.camera(for: routeCoordinates, padding: UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20), bearing: nil, pitch: nil)
+                let camera = mapView.mapboxMap.camera(for: routeCoordinates, camera: CameraOptions(), coordinatesPadding: UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20), maxZoom: nil, offset: nil)
                 mapView.camera.ease(to: camera, duration: 1.0)
             }
         } else if let loc = currentLocation {
@@ -112,8 +112,6 @@ struct MapOverlayView: UIViewRepresentable {
         func updateRoute(_ coordinates: [CLLocationCoordinate2D], on mapView: MapView) {
             guard coordinates.count >= 2 else { return }
             
-            var geoJSON = GeoJSONObject.geometry(.lineString(.init(coordinates)))
-            
             if !routeSourceAdded {
                 var source = GeoJSONSource(id: "route-source")
                 source.data = .geometry(.lineString(.init(coordinates)))
@@ -127,7 +125,7 @@ struct MapOverlayView: UIViewRepresentable {
                 
                 routeSourceAdded = true
             } else {
-                try? mapView.mapboxMap.updateGeoJSONSource(withId: "route-source", geoJSON: .geometry(.lineString(.init(coordinates))))
+                mapView.mapboxMap.updateGeoJSONSource(withId: "route-source", geoJSON: .geometry(.lineString(.init(coordinates))))
             }
         }
     }

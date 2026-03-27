@@ -2,6 +2,7 @@ import Foundation
 import CoreLocation
 import Combine
 import UIKit
+import MapKit
 
 @MainActor
 class RouteTracker: NSObject, ObservableObject {
@@ -12,7 +13,6 @@ class RouteTracker: NSObject, ObservableObject {
     @Published var currentCityState: String?
     
     private let locationManager = CLLocationManager()
-    private let geocoder = CLGeocoder()
     private var lastGeocodedLocation: CLLocation?
     private let minDistanceFilter: CLLocationDistance = 10 // meters between route points
     
@@ -62,7 +62,7 @@ class RouteTracker: NSObject, ObservableObject {
     private func updateHeadingOrientation() {
         var interfaceOrientation: UIInterfaceOrientation = .unknown
         if let scene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive || $0.activationState == .foregroundInactive }) as? UIWindowScene {
-            interfaceOrientation = scene.interfaceOrientation
+            interfaceOrientation = scene.effectiveGeometry.interfaceOrientation
         }
         
         var targetOrientation: CLDeviceOrientation = .portrait
@@ -72,6 +72,7 @@ class RouteTracker: NSObject, ObservableObject {
             case .portraitUpsideDown: targetOrientation = .portraitUpsideDown
             case .landscapeLeft: targetOrientation = .landscapeRight // UI landscapeLeft means device rotated right
             case .landscapeRight: targetOrientation = .landscapeLeft  // UI landscapeRight means device rotated left
+            case .unknown: break
             @unknown default: break
             }
         } else {
@@ -116,17 +117,24 @@ class RouteTracker: NSObject, ObservableObject {
         }
         
         lastGeocodedLocation = location
-        geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
-            guard let self = self, let placemark = placemarks?.first, error == nil else { return }
-            
-            Task { @MainActor in
+        let request = MKReverseGeocodingRequest(coordinate: location.coordinate)
+        Task { [weak self] in
+            guard let self = self else { return }
+            do {
+                let items = try await request.start()
+                guard let placemark = items.first?.placemark else { return }
+                
                 var components: [String] = []
                 if let locality = placemark.locality { components.append(locality) }
                 if let state = placemark.administrativeArea { components.append(state) }
                 
                 if !components.isEmpty {
-                    self.currentCityState = components.joined(separator: ", ")
+                    await MainActor.run {
+                        self.currentCityState = components.joined(separator: ", ")
+                    }
                 }
+            } catch {
+                print("Reverse geocode failed: \(error)")
             }
         }
     }
