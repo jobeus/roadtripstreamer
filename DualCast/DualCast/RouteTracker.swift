@@ -122,15 +122,11 @@ class RouteTracker: NSObject, ObservableObject {
             guard let self = self else { return }
             do {
                 let items = try await request.mapItems
-                guard let placemark = items.first?.placemark else { return }
+                guard let addressRep = items.first?.addressRepresentations else { return }
                 
-                var components: [String] = []
-                if let locality = placemark.locality { components.append(locality) }
-                if let state = placemark.administrativeArea { components.append(state) }
-                
-                if !components.isEmpty {
+                if let locationName = addressRep.cityWithContext ?? addressRep.cityName {
                     await MainActor.run {
-                        self.currentCityState = components.joined(separator: ", ")
+                        self.currentCityState = locationName
                     }
                 }
             } catch {
