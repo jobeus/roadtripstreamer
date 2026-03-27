@@ -100,6 +100,9 @@ struct MapOverlayView: UIViewRepresentable {
             // Only capture if bounding box is valid and map is actively visible (prevents PiP unresponsiveness in background)
             guard mapView.bounds.size.width > 0, mapView.window != nil else { return }
             
+            // Skip snapshotting while in background or PiP mode to avoid FigCaptureSourceRemote freeze
+            guard UIApplication.shared.applicationState == .active else { return }
+            
             // Use UIGraphicsImageRenderer for more efficient, modern rendering
             let format = UIGraphicsImageRendererFormat()
             format.scale = 1.0
