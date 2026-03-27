@@ -1,6 +1,6 @@
 import UIKit
 import AVFoundation
-import HaishinKit
+@preconcurrency import HaishinKit
 import Combine
 
 @MainActor
