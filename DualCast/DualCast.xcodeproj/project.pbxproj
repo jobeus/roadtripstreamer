@@ -34,9 +34,22 @@
 		CEFBA3272F75174400D0FBA3 /* DualCastUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DualCastUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		CEA4C9792F7638CB006130F9 /* Exceptions for "DualCast" folder in "DualCast" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = CEFBA30D2F75174300D0FBA3 /* DualCast */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CEFBA3102F75174300D0FBA3 /* DualCast */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CEA4C9792F7638CB006130F9 /* Exceptions for "DualCast" folder in "DualCast" target */,
+			);
 			path = DualCast;
 			sourceTree = "<group>";
 		};
@@ -411,6 +424,7 @@
 				DEVELOPMENT_TEAM = X34PNK9X44;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DualCast/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
 				INFOPLIST_KEY_NSCameraUsageDescription = "DualCast needs camera access to stream your road trip.";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DualCast needs location access to track your route while streaming.";
@@ -418,10 +432,6 @@
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "DualCast needs microphone access to capture streaming audio.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UIBackgroundModes = (
-					audio,
-					location,
-				);
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationLandscapeRight;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -455,6 +465,7 @@
 				DEVELOPMENT_TEAM = X34PNK9X44;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DualCast/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
 				INFOPLIST_KEY_NSCameraUsageDescription = "DualCast needs camera access to stream your road trip.";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DualCast needs location access to track your route while streaming.";
@@ -462,10 +473,6 @@
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "DualCast needs microphone access to capture streaming audio.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UIBackgroundModes = (
-					audio,
-					location,
-				);
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationLandscapeRight;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -499,10 +506,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "DualCast needs camera access to stream your road trip.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "DualCast needs microphone access to capture streaming audio.";
-				INFOPLIST_KEY_UIBackgroundModes = (
-					audio,
-					location,
-				);
+				INFOPLIST_KEY_UIBackgroundModes = "audio location";
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -530,10 +534,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "DualCast needs camera access to stream your road trip.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "DualCast needs microphone access to capture streaming audio.";
-				INFOPLIST_KEY_UIBackgroundModes = (
-					audio,
-					location,
-				);
+				INFOPLIST_KEY_UIBackgroundModes = "audio location";
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -560,10 +561,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "DualCast needs camera access to stream your road trip.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "DualCast needs microphone access to capture streaming audio.";
-				INFOPLIST_KEY_UIBackgroundModes = (
-					audio,
-					location,
-				);
+				INFOPLIST_KEY_UIBackgroundModes = "audio location";
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -589,10 +587,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "DualCast needs camera access to stream your road trip.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "DualCast needs microphone access to capture streaming audio.";
-				INFOPLIST_KEY_UIBackgroundModes = (
-					audio,
-					location,
-				);
+				INFOPLIST_KEY_UIBackgroundModes = "audio location";
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
