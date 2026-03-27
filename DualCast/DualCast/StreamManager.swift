@@ -75,15 +75,17 @@ class StreamManager: NSObject, ObservableObject {
         let videoAuth = await AVCaptureDevice.requestAccess(for: .video)
         let audioAuth = await AVCaptureDevice.requestAccess(for: .audio)
             
-            guard videoAuth && audioAuth else {
-                print("Camera/Mic permissions not granted.")
+        guard videoAuth && audioAuth else {
+            print("Camera/Mic permissions not granted.")
             return
         }
         
-        await MainActor.run {
-            self.setupAudioSession()
-            self.attachCameras()
-        }
+        // Yield the main thread to allow the Splash Screen to physically render and animate
+        // By delaying 1.5 seconds, we ensure the UI is fully visible before locking the thread for camera init
+        try? await Task.sleep(nanoseconds: 1_500_000_000)
+        
+        self.setupAudioSession()
+        self.attachCameras()
     }
 
     private func attachCameras() {
