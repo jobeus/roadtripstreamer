@@ -94,6 +94,10 @@ struct StreamView: View {
         .onAppear {
             routeTracker.startTracking()
         }
+        .onChange(of: scenePhase) { _, phase in
+            // Treat .inactive (like swiping into PiP) or .background as backgrounded to ensure we drop MultiCam early enough
+            streamManager.isAppBackgrounded = (phase != .active)
+        }
     }
     
     // MARK: - Normal Controls
