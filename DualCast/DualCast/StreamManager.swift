@@ -36,6 +36,13 @@ class StreamManager: NSObject, ObservableObject {
     private var pipObject: VideoTrackScreenObject?
     private var mapObject: ImageScreenObject?
     
+    @Published var isAppBackgrounded: Bool = false {
+        didSet {
+            guard oldValue != isAppBackgrounded else { return }
+            handleBackgroundStateChange()
+        }
+    }
+    
     @Published var isRecordingEnabled: Bool = false
     private let recorder = IOStreamRecorder()
 
@@ -52,7 +59,7 @@ class StreamManager: NSObject, ObservableObject {
     private func setupAudioSession() {
         let session = AVAudioSession.sharedInstance()
         do {
-            try session.setCategory(.playAndRecord, mode: .videoChat, options: [.defaultToSpeaker, .mixWithOthers, .allowBluetooth])
+            try session.setCategory(.playAndRecord, mode: .videoChat, options: [.defaultToSpeaker, .mixWithOthers, .allowBluetoothHFP])
             try session.setActive(true)
         } catch {
             print("Audio session error: \(error)")
@@ -86,7 +93,8 @@ class StreamManager: NSObject, ObservableObject {
             stream.isMultiCamSessionEnabled = true
             
             stream.configuration { session in
-                if #available(iOS 16.0, *) {
+                if #available(iOS 16.0, *),
+                   session.isMultitaskingCameraAccessSupported {
                     session.isMultitaskingCameraAccessEnabled = true
                 }
             }
@@ -95,18 +103,21 @@ class StreamManager: NSObject, ObservableObject {
             stream.videoMixerSettings.mode = .offscreen
             stream.screen.size = videoSize
             
-            let pip = VideoTrackScreenObject()
-            pip.track = 1 
-            self.pipObject = pip
+            if pipObject == nil {
+                let pip = VideoTrackScreenObject()
+                pip.track = 1 
+                self.pipObject = pip
+                try? stream.screen.addChild(pip)
+            }
             
-            let mapOverlay = ImageScreenObject()
-            mapOverlay.cgImage = nil
-            self.mapObject = mapOverlay
+            if mapObject == nil {
+                let mapOverlay = ImageScreenObject()
+                mapOverlay.cgImage = nil
+                self.mapObject = mapOverlay
+                try? stream.screen.addChild(mapOverlay)
+            }
             
             updatePiP()
-            
-            try? stream.screen.addChild(pip)
-            try? stream.screen.addChild(mapOverlay)
             
             stream.screen.startRunning()
             
@@ -133,6 +144,45 @@ class StreamManager: NSObject, ObservableObject {
         
         if let mic = AVCaptureDevice.default(for: .audio) {
             stream.attachAudio(mic)
+        }
+    }
+    
+    private func handleBackgroundStateChange() {
+        guard AVCaptureMultiCamSession.isMultiCamSupported else { return }
+        
+        var supportsBackgroundMultiCam = false
+        if #available(iOS 16.0, *) {
+            supportsBackgroundMultiCam = AVCaptureSession().isMultitaskingCameraAccessSupported
+        }
+        
+        if !supportsBackgroundMultiCam {
+            if isAppBackgrounded {
+                print("Falling back to Single Camera for background PiP...")
+                stream.isMultiCamSessionEnabled = false
+                stream.videoMixerSettings.mode = .passthrough
+                
+                stream.attachCamera(nil, track: 1)
+                
+                let position: AVCaptureDevice.Position = isFrontCameraMain ? .front : .back
+                if let cam = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position) {
+                    stream.attachCamera(cam, track: 0)
+                }
+            } else {
+                print("Restoring MultiCam Session in foreground...")
+                stream.isMultiCamSessionEnabled = true
+                stream.videoMixerSettings.mode = .offscreen
+                
+                if let back = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
+                    stream.attachCamera(back, track: 0)
+                }
+                if let front = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
+                    stream.attachCamera(front, track: 1) { captureUnit, _ in
+                        captureUnit?.isVideoMirrored = true
+                    }
+                }
+                
+                updatePiP()
+            }
         }
     }
     
