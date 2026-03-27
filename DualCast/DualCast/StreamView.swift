@@ -32,7 +32,7 @@ struct StreamView: View {
             .allowsHitTesting(false)
             
             // Background Camera Preview
-            HKViewRepresentation(stream: streamManager.stream)
+            HKViewRepresentation(stream: streamManager.stream, isStreaming: streamManager.isStreaming)
                 .ignoresSafeArea()
                 .background(Color.black)
             
@@ -368,8 +368,13 @@ class PiPManager: NSObject, AVPictureInPictureControllerDelegate {
         
         let pip = AVPictureInPictureController(contentSource: source)
         pip.delegate = self
-        pip.canStartPictureInPictureAutomaticallyFromInline = true
+        // Default to false unless explicitly updated by the view state
+        pip.canStartPictureInPictureAutomaticallyFromInline = false
         self.pipController = pip
+    }
+    
+    func setPiPActive(_ active: Bool) {
+        pipController?.canStartPictureInPictureAutomaticallyFromInline = active
     }
     
     func pictureInPictureControllerWillStartPictureInPicture(_ pictureInPictureController: AVPictureInPictureController) {
@@ -401,6 +406,7 @@ class PiPManager: NSObject, AVPictureInPictureControllerDelegate {
 // SwiftUI wrapper for HaishinKit's MTHKView with PiP
 struct HKViewRepresentation: UIViewRepresentable {
     let stream: RTMPStream
+    var isStreaming: Bool
     
     class Coordinator {
         let pipManager = PiPManager()
@@ -424,12 +430,13 @@ struct HKViewRepresentation: UIViewRepresentable {
         
         DispatchQueue.main.async {
             context.coordinator.pipManager.setupPiP(with: view, container: container)
+            context.coordinator.pipManager.setPiPActive(self.isStreaming)
         }
         
         return container
     }
     
     func updateUIView(_ uiView: UIView, context: Context) {
-        // No update needed
+        context.coordinator.pipManager.setPiPActive(isStreaming)
     }
 }
