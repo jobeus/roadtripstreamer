@@ -26,6 +26,8 @@ class RouteTracker: NSObject, ObservableObject {
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = minDistanceFilter
         locationManager.delegate = self
+        locationManager.allowsBackgroundLocationUpdates = true
+        locationManager.showsBackgroundLocationIndicator = true
         
         loadRoute()
         updateHeadingOrientation()
