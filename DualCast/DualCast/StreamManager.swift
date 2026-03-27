@@ -157,16 +157,14 @@ class StreamManager: NSObject, ObservableObject {
         
         if !supportsBackgroundMultiCam {
             if isAppBackgrounded {
-                print("Falling back to Single Camera for background PiP...")
+                print("Falling back to Audio-Only Mode to prevent background crash...")
                 stream.isMultiCamSessionEnabled = false
                 stream.videoMixerSettings.mode = .passthrough
                 
+                // Remove ALL video inputs. Since iPhone cannot PiP a replaced session, the camera
+                // drops entirely and sends a black frame. Audio (Mic) and RTMP stay fully connected!
+                stream.attachCamera(nil, track: 0)
                 stream.attachCamera(nil, track: 1)
-                
-                let position: AVCaptureDevice.Position = isFrontCameraMain ? .front : .back
-                if let cam = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position) {
-                    stream.attachCamera(cam, track: 0)
-                }
             } else {
                 print("Restoring MultiCam Session in foreground...")
                 stream.isMultiCamSessionEnabled = true
