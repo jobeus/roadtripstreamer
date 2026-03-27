@@ -350,6 +350,7 @@ import AVKit
 class PiPManager: NSObject, AVPictureInPictureControllerDelegate {
     private var pipController: AVPictureInPictureController?
     private var pipVideoCallViewController: AVPictureInPictureVideoCallViewController?
+    private var pipSource: AVPictureInPictureController.ContentSource?
     private weak var sourceView: MTHKView?
     private weak var sourceViewSuperview: UIView?
     
@@ -361,20 +362,24 @@ class PiPManager: NSObject, AVPictureInPictureControllerDelegate {
         pipVC.view.backgroundColor = .black
         self.pipVideoCallViewController = pipVC
         
-        let source = AVPictureInPictureController.ContentSource(
+        self.pipSource = AVPictureInPictureController.ContentSource(
             activeVideoCallSourceView: container,
             contentViewController: pipVC
         )
-        
-        let pip = AVPictureInPictureController(contentSource: source)
-        pip.delegate = self
-        // Default to false unless explicitly updated by the view state
-        pip.canStartPictureInPictureAutomaticallyFromInline = false
-        self.pipController = pip
     }
     
     func setPiPActive(_ active: Bool) {
-        pipController?.canStartPictureInPictureAutomaticallyFromInline = active
+        if active {
+            if pipController == nil, let source = pipSource {
+                let pip = AVPictureInPictureController(contentSource: source)
+                pip.delegate = self
+                pip.canStartPictureInPictureAutomaticallyFromInline = true
+                self.pipController = pip
+            }
+        } else {
+            pipController?.canStartPictureInPictureAutomaticallyFromInline = false
+            pipController = nil
+        }
     }
     
     func pictureInPictureControllerWillStartPictureInPicture(_ pictureInPictureController: AVPictureInPictureController) {
