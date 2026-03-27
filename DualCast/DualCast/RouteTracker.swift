@@ -117,11 +117,11 @@ class RouteTracker: NSObject, ObservableObject {
         }
         
         lastGeocodedLocation = location
-        let request = MKReverseGeocodingRequest(coordinate: location.coordinate)
+        guard let request = MKReverseGeocodingRequest(location: location) else { return }
         Task { [weak self] in
             guard let self = self else { return }
             do {
-                let items = try await request.start()
+                let items = try await request.mapItems
                 guard let placemark = items.first?.placemark else { return }
                 
                 var components: [String] = []
