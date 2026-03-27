@@ -32,6 +32,9 @@ class TwitchChatManager: ObservableObject {
     }
     
     private func openConnection() {
+        webSocketTask?.cancel(with: .goingAway, reason: nil)
+        webSocketTask = nil
+        
         let url = URL(string: "wss://irc-ws.chat.twitch.tv:443")!
         let session = URLSession(configuration: .default)
         webSocketTask = session.webSocketTask(with: url)
