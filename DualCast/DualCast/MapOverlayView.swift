@@ -62,8 +62,9 @@ struct MapOverlayView: UIViewRepresentable {
             if routeCoordinates.count == 1 {
                 mapView.camera.ease(to: CameraOptions(center: routeCoordinates[0], zoom: 14), duration: 1.0)
             } else {
-                let camera = mapView.mapboxMap.camera(for: routeCoordinates, camera: CameraOptions(), coordinatesPadding: UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20), maxZoom: nil, offset: nil)
-                mapView.camera.ease(to: camera, duration: 1.0)
+                if let camera = try? mapView.mapboxMap.camera(for: routeCoordinates, camera: CameraOptions(), coordinatesPadding: UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20), maxZoom: nil, offset: nil) {
+                    mapView.camera.ease(to: camera, duration: 1.0)
+                }
             }
         } else if let loc = currentLocation {
             mapView.camera.ease(to: CameraOptions(center: loc, zoom: 14), duration: 1.0)
