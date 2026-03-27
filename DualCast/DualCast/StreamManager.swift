@@ -30,6 +30,9 @@ class StreamManager: NSObject, ObservableObject {
         didSet { mapObject?.isVisible = isMapVisible }
     }
     
+    @Published var isZoomedToRoute: Bool = false
+    @Published var currentCityState: String?
+    
     private var pipObject: VideoTrackScreenObject?
     private var mapObject: ImageScreenObject?
     

@@ -42,6 +42,22 @@ struct StreamView: View {
                 if showChat && !chatManager.messages.isEmpty {
                     chatOverlay
                 }
+                
+                // Map Tap Target
+                if showMap {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Color.white.opacity(0.001)
+                                .frame(width: 256, height: 192)
+                                .padding(20)
+                                .onTapGesture {
+                                    streamManager.isZoomedToRoute.toggle()
+                                }
+                        }
+                        Spacer()
+                    }
+                }
             } else {
                 // === PANIC MODE: Fake "Paused" Screen ===
                 panicOverlay
@@ -50,6 +66,10 @@ struct StreamView: View {
         .sheet(isPresented: $showingSettings) {
             SettingsView()
                 .environmentObject(appState)
+                .environmentObject(routeTracker)
+        }
+        .onChange(of: routeTracker.currentCityState) { newValue in
+            streamManager.currentCityState = newValue
         }
         .onChange(of: showMap) { newValue in
             streamManager.isMapVisible = newValue

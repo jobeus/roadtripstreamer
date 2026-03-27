@@ -28,14 +28,44 @@ struct MapOverlayView: UIViewRepresentable {
         mapView.location.options.puckBearingEnabled = true
         mapView.location.options.puckBearing = .heading
         
+        let label = UILabel()
+        label.tag = 999
+        label.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        label.textColor = .white
+        label.font = .boldSystemFont(ofSize: 14)
+        label.layer.cornerRadius = 4
+        label.clipsToBounds = true
+        label.isHidden = true
+        label.translatesAutoresizingMaskIntoConstraints = false
+        mapView.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.bottomAnchor.constraint(equalTo: mapView.bottomAnchor, constant: -8),
+            label.leadingAnchor.constraint(equalTo: mapView.leadingAnchor, constant: 8)
+        ])
+        
         context.coordinator.mapView = mapView
         
         return mapView
     }
     
     func updateUIView(_ mapView: MapView, context: Context) {
-        // Follow user location
-        if let loc = currentLocation {
+        if let label = mapView.viewWithTag(999) as? UILabel {
+            if let cityState = streamManager.currentCityState {
+                label.text = " \(cityState) "
+                label.isHidden = false
+            } else {
+                label.isHidden = true
+            }
+        }
+        
+        if streamManager.isZoomedToRoute, !routeCoordinates.isEmpty {
+            if routeCoordinates.count == 1 {
+                mapView.camera.ease(to: CameraOptions(center: routeCoordinates[0], zoom: 14), duration: 1.0)
+            } else {
+                let camera = mapView.mapboxMap.camera(for: routeCoordinates, padding: UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20), bearing: nil, pitch: nil)
+                mapView.camera.ease(to: camera, duration: 1.0)
+            }
+        } else if let loc = currentLocation {
             mapView.camera.ease(to: CameraOptions(center: loc, zoom: 14), duration: 1.0)
         }
         

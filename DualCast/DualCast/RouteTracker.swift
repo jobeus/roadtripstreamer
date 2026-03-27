@@ -9,9 +9,17 @@ class RouteTracker: NSObject, ObservableObject {
     @Published var currentSpeed: CLLocationSpeed = 0
     @Published var routeCoordinates: [CLLocationCoordinate2D] = []
     @Published var isTracking = false
+    @Published var currentCityState: String?
     
     private let locationManager = CLLocationManager()
+    private let geocoder = CLGeocoder()
+    private var lastGeocodedLocation: CLLocation?
     private let minDistanceFilter: CLLocationDistance = 10 // meters between route points
+    
+    private var savedRouteURL: URL {
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        return paths[0].appendingPathComponent("saved_route.json")
+    }
     
     override init() {
         super.init()
@@ -19,6 +27,7 @@ class RouteTracker: NSObject, ObservableObject {
         locationManager.distanceFilter = minDistanceFilter
         locationManager.delegate = self
         
+        loadRoute()
         updateHeadingOrientation()
         
         NotificationCenter.default.addObserver(
@@ -31,6 +40,19 @@ class RouteTracker: NSObject, ObservableObject {
     
     deinit {
         NotificationCenter.default.removeObserver(self)
+    }
+    
+    private func loadRoute() {
+        guard let data = try? Data(contentsOf: savedRouteURL),
+              let saved = try? JSONDecoder().decode([SavedCoordinate].self, from: data) else { return }
+        self.routeCoordinates = saved.map { $0.coordinate }
+    }
+    
+    private func saveRoute() {
+        let codableCoords = routeCoordinates.map { SavedCoordinate($0) }
+        if let data = try? JSONEncoder().encode(codableCoords) {
+            try? data.write(to: savedRouteURL)
+        }
     }
     
     @objc private func orientationChanged() {
@@ -84,7 +106,37 @@ class RouteTracker: NSObject, ObservableObject {
     
     func clearRoute() {
         routeCoordinates.removeAll()
+        saveRoute()
     }
+    
+    private func reverseGeocode(location: CLLocation) {
+        // Geocode if we haven't yet, or if we moved more than 1000 meters
+        if let last = lastGeocodedLocation, location.distance(from: last) < 1000 {
+            return
+        }
+        
+        lastGeocodedLocation = location
+        geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
+            guard let self = self, let placemark = placemarks?.first, error == nil else { return }
+            
+            Task { @MainActor in
+                var components: [String] = []
+                if let locality = placemark.locality { components.append(locality) }
+                if let state = placemark.administrativeArea { components.append(state) }
+                
+                if !components.isEmpty {
+                    self.currentCityState = components.joined(separator: ", ")
+                }
+            }
+        }
+    }
+}
+
+struct SavedCoordinate: Codable {
+    let latitude: Double
+    let longitude: Double
+    var coordinate: CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: latitude, longitude: longitude) }
+    init(_ coord: CLLocationCoordinate2D) { latitude = coord.latitude; longitude = coord.longitude }
 }
 
 extension RouteTracker: CLLocationManagerDelegate {
@@ -98,7 +150,10 @@ extension RouteTracker: CLLocationManagerDelegate {
             // Only add to route if accuracy is reasonable
             if location.horizontalAccuracy < 50 {
                 self.routeCoordinates.append(location.coordinate)
+                self.saveRoute()
             }
+            
+            self.reverseGeocode(location: location)
         }
     }
     
