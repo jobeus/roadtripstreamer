@@ -344,92 +344,20 @@ struct StreamView: View {
     }
 }
 
-import AVKit
+import AVFoundation
 
-// MARK: - PiP Manager for Stream
-class PiPManager: NSObject, AVPictureInPictureControllerDelegate {
-    private var pipController: AVPictureInPictureController?
-    private var pipVideoCallViewController: AVPictureInPictureVideoCallViewController?
-    private weak var sourceView: MTHKView?
-    private weak var sourceViewSuperview: UIView?
-    
-    func setupPiP(with sourceView: MTHKView, container: UIView) {
-        self.sourceView = sourceView
-        guard AVPictureInPictureController.isPictureInPictureSupported() else { return }
-        
-        let pipVC = AVPictureInPictureVideoCallViewController()
-        pipVC.view.backgroundColor = .black
-        self.pipVideoCallViewController = pipVC
-        
-        let source = AVPictureInPictureController.ContentSource(
-            activeVideoCallSourceView: container,
-            contentViewController: pipVC
-        )
-        
-        let pip = AVPictureInPictureController(contentSource: source)
-        pip.delegate = self
-        pip.canStartPictureInPictureAutomaticallyFromInline = true
-        self.pipController = pip
-    }
-    
-    func pictureInPictureControllerWillStartPictureInPicture(_ pictureInPictureController: AVPictureInPictureController) {
-        guard let sourceView = sourceView, let pipVC = pipVideoCallViewController else { return }
-        self.sourceViewSuperview = sourceView.superview
-        
-        sourceView.removeFromSuperview()
-        sourceView.translatesAutoresizingMaskIntoConstraints = false
-        pipVC.view.addSubview(sourceView)
-        NSLayoutConstraint.activate([
-            sourceView.leadingAnchor.constraint(equalTo: pipVC.view.leadingAnchor),
-            sourceView.trailingAnchor.constraint(equalTo: pipVC.view.trailingAnchor),
-            sourceView.topAnchor.constraint(equalTo: pipVC.view.topAnchor),
-            sourceView.bottomAnchor.constraint(equalTo: pipVC.view.bottomAnchor)
-        ])
-    }
-    
-    func pictureInPictureControllerDidStopPictureInPicture(_ pictureInPictureController: AVPictureInPictureController) {
-        guard let sourceView = sourceView, let superview = sourceViewSuperview else { return }
-        
-        sourceView.removeFromSuperview()
-        sourceView.translatesAutoresizingMaskIntoConstraints = true
-        sourceView.frame = superview.bounds
-        sourceView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        superview.addSubview(sourceView)
-    }
-}
-
-// SwiftUI wrapper for HaishinKit's MTHKView with PiP
+// SwiftUI wrapper for HaishinKit's MTHKView
 struct HKViewRepresentation: UIViewRepresentable {
     let stream: RTMPStream
     
-    class Coordinator {
-        let pipManager = PiPManager()
-    }
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
-    }
-    
-    func makeUIView(context: Context) -> UIView {
-        let container = UIView(frame: .zero)
-        container.backgroundColor = .black
-        
+    func makeUIView(context: Context) -> MTHKView {
         let view = MTHKView(frame: .zero)
         view.videoGravity = AVLayerVideoGravity.resizeAspectFill
         view.attachStream(stream)
-        
-        view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        view.frame = container.bounds
-        container.addSubview(view)
-        
-        DispatchQueue.main.async {
-            context.coordinator.pipManager.setupPiP(with: view, container: container)
-        }
-        
-        return container
+        return view
     }
     
-    func updateUIView(_ uiView: UIView, context: Context) {
+    func updateUIView(_ uiView: MTHKView, context: Context) {
         // No update needed
     }
 }
