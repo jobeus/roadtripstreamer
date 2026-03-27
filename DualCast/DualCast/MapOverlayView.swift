@@ -10,7 +10,7 @@ struct MapOverlayView: UIViewRepresentable {
         // Set access token before creating MapView
         MapboxOptions.accessToken = Secrets.mapboxPublicToken
         
-        let mapView = MapView(frame: .zero)
+        let mapView = MapView(frame: CGRect(x: 0, y: 0, width: 64, height: 64))
         mapView.mapboxMap.setCamera(to: CameraOptions(
             center: currentLocation ?? CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
             zoom: 14
@@ -86,7 +86,7 @@ struct MapOverlayView: UIViewRepresentable {
         
         init(streamManager: StreamManager) {
             self.streamManager = streamManager
-            self.timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self.timer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { [weak self] _ in
                 self?.snapshotMap()
             }
         }
@@ -100,13 +100,17 @@ struct MapOverlayView: UIViewRepresentable {
             // Only capture if bounding box is valid
             guard mapView.bounds.size.width > 0 else { return }
             
-            // Use 1.0 scale so the output image pixel size exactly matches the stream bounds (e.g. 256x192)
-            UIGraphicsBeginImageContextWithOptions(mapView.bounds.size, false, 1.0)
-            mapView.drawHierarchy(in: mapView.bounds, afterScreenUpdates: false)
-            let image = UIGraphicsGetImageFromCurrentImageContext()
-            UIGraphicsEndImageContext()
+            // Use UIGraphicsImageRenderer for more efficient, modern rendering
+            let format = UIGraphicsImageRendererFormat()
+            format.scale = 1.0
+            format.opaque = false
             
-            if let cgImage = image?.cgImage {
+            let renderer = UIGraphicsImageRenderer(size: mapView.bounds.size, format: format)
+            let image = renderer.image { _ in
+                mapView.drawHierarchy(in: mapView.bounds, afterScreenUpdates: false)
+            }
+            
+            if let cgImage = image.cgImage {
                 streamManager.updateMapImage(cgImage)
             }
         }
