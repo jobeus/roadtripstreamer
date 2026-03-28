@@ -138,12 +138,6 @@ class RouteTracker: NSObject, ObservableObject {
     }
 }
 
-struct SavedCoordinate: Codable {
-    let latitude: Double
-    let longitude: Double
-    var coordinate: CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: latitude, longitude: longitude) }
-    init(_ coord: CLLocationCoordinate2D) { latitude = coord.latitude; longitude = coord.longitude }
-}
 
 extension RouteTracker: CLLocationManagerDelegate {
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {

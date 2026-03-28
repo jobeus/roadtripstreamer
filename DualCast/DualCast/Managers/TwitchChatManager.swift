@@ -1,13 +1,6 @@
 import Foundation
 import Combine
 
-struct ChatMessage: Identifiable, Equatable {
-    let id = UUID()
-    let username: String
-    let message: String
-    let color: String
-    let timestamp: Date
-}
 
 @MainActor
 class TwitchChatManager: ObservableObject {
