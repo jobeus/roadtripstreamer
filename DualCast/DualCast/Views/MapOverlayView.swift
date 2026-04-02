@@ -39,7 +39,7 @@ struct MapOverlayView: UIViewRepresentable {
         label.translatesAutoresizingMaskIntoConstraints = false
         mapView.addSubview(label)
         NSLayoutConstraint.activate([
-            label.bottomAnchor.constraint(equalTo: mapView.bottomAnchor, constant: -8),
+            label.topAnchor.constraint(equalTo: mapView.topAnchor, constant: 8),
             label.leadingAnchor.constraint(equalTo: mapView.leadingAnchor, constant: 8)
         ])
         
