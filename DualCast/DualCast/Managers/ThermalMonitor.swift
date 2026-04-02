@@ -20,7 +20,7 @@ class ThermalMonitor: ObservableObject {
         NotificationCenter.default.removeObserver(self)
     }
     
-    nonisolated @objc private func thermalStateChanged() {
+    @objc nonisolated private func thermalStateChanged() {
         Task { @MainActor in
             self.checkThermalState()
         }

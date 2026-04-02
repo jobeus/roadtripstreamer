@@ -285,7 +285,7 @@ class StreamManager: NSObject, ObservableObject {
         connectionStatus = "Disconnected"
     }
     
-    nonisolated @objc private func rtmpStatusHandler(_ notification: Notification) {
+    @objc nonisolated private func rtmpStatusHandler(_ notification: Notification) {
         let e = Event.from(notification)
         guard let data = e.data as? ASObject, let code = data["code"] as? String else { return }
         
