@@ -106,7 +106,7 @@ class StreamManager: NSObject, ObservableObject {
         if multiCamSupported {
             stream.isMultiCamSessionEnabled = true
             
-            stream.configuration { session in
+            stream.configuration { @Sendable session in
                 if #available(iOS 16.0, *),
                    session.isMultitaskingCameraAccessSupported {
                     session.isMultitaskingCameraAccessEnabled = true
@@ -143,7 +143,7 @@ class StreamManager: NSObject, ObservableObject {
             
             // Front camera (track 1)
             if let front = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
-                stream.attachCamera(front, track: 1) { captureUnit, _ in
+                stream.attachCamera(front, track: 1) { @Sendable captureUnit, _ in
                     captureUnit?.isVideoMirrored = true
                 }
             }
@@ -193,7 +193,7 @@ class StreamManager: NSObject, ObservableObject {
                     stream.attachCamera(back, track: 0)
                 }
                 if let front = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
-                    stream.attachCamera(front, track: 1) { captureUnit, _ in
+                    stream.attachCamera(front, track: 1) { @Sendable captureUnit, _ in
                         captureUnit?.isVideoMirrored = true
                     }
                 }
