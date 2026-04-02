@@ -18,9 +18,6 @@ class StreamManager: NSObject, ObservableObject {
     @Published var isFrontCameraMain: Bool = false {
         didSet { updatePiP() }
     }
-    @Published var pipCorner: Int = 3 { // 0: TL, 1: TR, 2: BL, 3: BR
-        didSet { updatePiP() }
-    }
     
     @Published var isPiPVisible: Bool = true {
         didSet { updatePiP() }
@@ -225,22 +222,8 @@ class StreamManager: NSObject, ObservableObject {
         pip.layoutMargin = UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
         #endif
         
-        // HaishinKit ScreenObject uses horizontal/vertical alignments
-        switch pipCorner {
-        case 0: // Top Left
-            pip.verticalAlignment = .top
-            pip.horizontalAlignment = .left
-        case 1: // Top Right
-            pip.verticalAlignment = .top
-            pip.horizontalAlignment = .right
-        case 2: // Bottom Left
-            pip.verticalAlignment = .bottom
-            pip.horizontalAlignment = .left
-        case 3: // Bottom Right
-            pip.verticalAlignment = .bottom
-            pip.horizontalAlignment = .right
-        default: break
-        }
+        pip.verticalAlignment = .bottom
+        pip.horizontalAlignment = .right
         
         pip.isVisible = isPiPVisible
         
