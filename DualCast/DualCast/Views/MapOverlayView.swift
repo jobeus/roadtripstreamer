@@ -132,18 +132,23 @@ struct MapOverlayView: UIViewRepresentable {
             guard coordinates.count >= 2 else { return }
             self.latestRouteCoordinates = coordinates
             
+            let lineString = LineString(coordinates)
+            let feature = Feature(geometry: .lineString(lineString))
+            
             if !routeSourceAdded {
                 var source = GeoJSONSource(id: "route-source")
-                source.data = .geometry(.lineString(.init(coordinates)))
+                source.data = .feature(feature)
                 
                 do {
                     try mapView.mapboxMap.addSource(source)
                     
                     var layer = LineLayer(id: "route-layer", source: "route-source")
-                    // Use a slightly larger and brighter blue to stand out 
-                    layer.lineColor = .constant(StyleColor(.systemBlue))
-                    layer.lineWidth = .constant(4.0)
+                    // Use a static UIColor instead of dynamic system colors to prevent resolution failures in background/offscreen mode
+                    layer.lineColor = .constant(StyleColor(UIColor(red: 0.2, green: 0.6, blue: 1.0, alpha: 1.0)))
+                    layer.lineWidth = .constant(5.0)
                     layer.lineOpacity = .constant(0.9)
+                    layer.lineJoin = .constant(.round)
+                    layer.lineCap = .constant(.round)
                     
                     try mapView.mapboxMap.addLayer(layer)
                     routeSourceAdded = true
@@ -154,7 +159,7 @@ struct MapOverlayView: UIViewRepresentable {
                 }
             } else {
                 do {
-                    try mapView.mapboxMap.updateGeoJSONSource(withId: "route-source", geoJSON: .geometry(.lineString(.init(coordinates))))
+                    try mapView.mapboxMap.updateGeoJSONSource(withId: "route-source", geoJSON: .feature(feature))
                 } catch {
                     // Reset if the source was lost (e.g. style dynamically reloaded)
                     routeSourceAdded = false
