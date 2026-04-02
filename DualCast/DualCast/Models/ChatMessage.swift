@@ -1,6 +1,6 @@
 import Foundation
 
-struct ChatMessage: Identifiable, Equatable {
+struct ChatMessage: Identifiable, Equatable, Sendable {
     let id = UUID()
     let username: String
     let message: String

@@ -1,7 +1,7 @@
 import Foundation
 import CoreLocation
 
-struct SavedCoordinate: Codable {
+struct SavedCoordinate: Codable, Sendable {
     let latitude: Double
     let longitude: Double
     var coordinate: CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: latitude, longitude: longitude) }

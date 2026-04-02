@@ -11,6 +11,7 @@ class TwitchChatManager: ObservableObject {
     private let channel = "scottywanders"
     private let maxMessages = 50
     private var shouldReconnect = false
+    private let urlSession = URLSession(configuration: .default)
     
     func connect() {
         shouldReconnect = true
@@ -29,8 +30,7 @@ class TwitchChatManager: ObservableObject {
         webSocketTask = nil
         
         let url = URL(string: "wss://irc-ws.chat.twitch.tv:443")!
-        let session = URLSession(configuration: .default)
-        webSocketTask = session.webSocketTask(with: url)
+        webSocketTask = urlSession.webSocketTask(with: url)
         webSocketTask?.resume()
         
         // Anonymous login with tags capability for colors

@@ -50,6 +50,15 @@ class StreamManager: NSObject, ObservableObject {
     
     @Published var isRecordingEnabled: Bool = false
     private let recorder = IOStreamRecorder()
+    
+    private var isIntentionalDisconnect = false
+    
+    private static let supportsBackgroundMultiCam: Bool = {
+        if #available(iOS 16.0, *) {
+            return AVCaptureSession().isMultitaskingCameraAccessSupported
+        }
+        return false
+    }()
 
     
     override init() {
@@ -120,6 +129,7 @@ class StreamManager: NSObject, ObservableObject {
                 mapOverlay.cgImage = nil
                 self.mapObject = mapOverlay
                 try? stream.screen.addChild(mapOverlay)
+                setupMapLayout()
             }
             
             updatePiP()
@@ -158,12 +168,7 @@ class StreamManager: NSObject, ObservableObject {
     private func handleBackgroundStateChange() {
         guard AVCaptureMultiCamSession.isMultiCamSupported else { return }
         
-        var supportsBackgroundMultiCam = false
-        if #available(iOS 16.0, *) {
-            supportsBackgroundMultiCam = AVCaptureSession().isMultitaskingCameraAccessSupported
-        }
-        
-        if !supportsBackgroundMultiCam {
+        if !Self.supportsBackgroundMultiCam {
             if isAppBackgrounded {
                 print("Falling back to Audio-Only Mode to prevent background crash...")
                 stream.isMultiCamSessionEnabled = false
@@ -241,17 +246,21 @@ class StreamManager: NSObject, ObservableObject {
         
         // Position map overlay (top right by default for Twitch)
         if let map = mapObject {
-            // Exact target size: 256x192 (20% of 1280)
-            map.size = CGSize(width: 256, height: 192)
-            #if os(macOS)
-            map.layoutMargin = NSEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
-            #else
-            map.layoutMargin = UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
-            #endif
-            map.verticalAlignment = .top
-            map.horizontalAlignment = .right
             map.isVisible = isMapVisible
         }
+    }
+    
+    private func setupMapLayout() {
+        guard let map = mapObject else { return }
+        // Exact target size: 256x192 (20% of 1280)
+        map.size = CGSize(width: 256, height: 192)
+        #if os(macOS)
+        map.layoutMargin = NSEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
+        #else
+        map.layoutMargin = UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
+        #endif
+        map.verticalAlignment = .top
+        map.horizontalAlignment = .right
     }
     
     func updateMapImage(_ cgImage: CGImage?) {
@@ -264,11 +273,13 @@ class StreamManager: NSObject, ObservableObject {
     func startStreaming(rtmpURL: String, streamKey: String) {
         guard !isStreaming, !streamKey.isEmpty else { return }
         
+        isIntentionalDisconnect = false
         connectionStatus = "Connecting..."
         connection.connect(rtmpURL)
     }
     
     func stopStreaming() {
+        isIntentionalDisconnect = true
         connection.close()
         isStreaming = false
         connectionStatus = "Disconnected"
@@ -294,14 +305,28 @@ class StreamManager: NSObject, ObservableObject {
                 self.isStreaming = false
                 self.recorder.stopRunning()
                 self.stream.removeObserver(self.recorder)
+                self.handleReconnect()
             case RTMPConnection.Code.connectFailed.rawValue, RTMPConnection.Code.connectRejected.rawValue:
                 self.connectionStatus = "Failed"
                 self.isStreaming = false
                 self.recorder.stopRunning()
                 self.stream.removeObserver(self.recorder)
+                self.handleReconnect()
             default:
                 break
             }
+        }
+    }
+    
+    private func handleReconnect() {
+        guard !isIntentionalDisconnect else { return }
+        print("Connection lost, attempting to reconnect...")
+        self.connectionStatus = "Reconnecting..."
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+            guard let self = self, !self.isIntentionalDisconnect else { return }
+            let rtmpURL = UserDefaults.standard.string(forKey: "rtmpURL") ?? "rtmp://live.twitch.tv/app/"
+            self.connection.connect(rtmpURL)
         }
     }
 }

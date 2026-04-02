@@ -5,6 +5,7 @@ import HaishinKit
 class BackgroundFrameGenerator {
     private var timer: Timer?
     private var pixelBuffer: CVPixelBuffer?
+    private var formatDescription: CMFormatDescription?
     private weak var stream: RTMPStream?
     
     init(stream: RTMPStream) {
@@ -81,6 +82,11 @@ class BackgroundFrameGenerator {
         }
         CVPixelBufferUnlockBaseAddress(pb, [])
         self.pixelBuffer = pb
+        CMVideoFormatDescriptionCreateForImageBuffer(
+            allocator: kCFAllocatorDefault,
+            imageBuffer: pb,
+            formatDescriptionOut: &self.formatDescription
+        )
     }
     
     func start() {
@@ -95,11 +101,8 @@ class BackgroundFrameGenerator {
                 decodeTimeStamp: .invalid
             )
             
-            var formatDesc: CMFormatDescription?
-            CMVideoFormatDescriptionCreateForImageBuffer(allocator: kCFAllocatorDefault, imageBuffer: pb, formatDescriptionOut: &formatDesc)
-            
             var sampleBuffer: CMSampleBuffer?
-            guard let fd = formatDesc else { return }
+            guard let fd = self.formatDescription else { return }
             
             CMSampleBufferCreateReadyWithImageBuffer(
                 allocator: kCFAllocatorDefault,

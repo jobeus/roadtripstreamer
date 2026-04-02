@@ -15,15 +15,18 @@ class RouteTracker: NSObject, ObservableObject {
     private let locationManager = CLLocationManager()
     private var lastGeocodedLocation: CLLocation?
     private let minDistanceFilter: CLLocationDistance = 10 // meters between route points
+    private var saveTimer: Timer?
     
-    private var savedRouteURL: URL {
+    private nonisolated func getSavedRouteURL() -> URL {
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         return paths[0].appendingPathComponent("saved_route.json")
     }
     
+    private var savedRouteURL: URL { getSavedRouteURL() }
+    
     override init() {
         super.init()
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
         locationManager.distanceFilter = minDistanceFilter
         locationManager.delegate = self
         locationManager.allowsBackgroundLocationUpdates = true
@@ -38,10 +41,21 @@ class RouteTracker: NSObject, ObservableObject {
             name: UIDevice.orientationDidChangeNotification,
             object: nil
         )
+        
+        saveTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.saveRoute()
+            }
+        }
     }
     
     deinit {
         NotificationCenter.default.removeObserver(self)
+        // Must capture these off the main actor carefully, or do it during tear-down explicitly.  Since this is
+        // Swift 6 / strict concurrency, properties on a MainActor class can't be read in deinit synchronously.
+        // The safest approach is simply to rely on our saveRoute() call on stopTracking() or app backgrounding,
+        // rather than trying to synchronously save in deinit.
+        saveTimer?.invalidate()
     }
     
     private func loadRoute() {
@@ -51,9 +65,14 @@ class RouteTracker: NSObject, ObservableObject {
     }
     
     private func saveRoute() {
-        let codableCoords = routeCoordinates.map { SavedCoordinate($0) }
+        let coords = routeCoordinates
+        Self.performSave(coords: coords, url: savedRouteURL)
+    }
+    
+    private static func performSave(coords: [CLLocationCoordinate2D], url: URL) {
+        let codableCoords = coords.map { SavedCoordinate($0) }
         if let data = try? JSONEncoder().encode(codableCoords) {
-            try? data.write(to: savedRouteURL)
+            try? data.write(to: url)
         }
     }
     
@@ -150,7 +169,6 @@ extension RouteTracker: CLLocationManagerDelegate {
             // Only add to route if accuracy is reasonable
             if location.horizontalAccuracy < 50 {
                 self.routeCoordinates.append(location.coordinate)
-                self.saveRoute()
             }
             
             self.reverseGeocode(location: location)

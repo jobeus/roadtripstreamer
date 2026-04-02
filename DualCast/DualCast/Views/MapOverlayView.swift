@@ -63,16 +63,24 @@ struct MapOverlayView: UIViewRepresentable {
         }
         
         if streamManager.isZoomedToRoute, !routeCoordinates.isEmpty {
-            if routeCoordinates.count == 1 {
-                mapView.camera.ease(to: CameraOptions(center: routeCoordinates[0], zoom: 14), duration: 1.0)
-            } else {
-                if let camera = try? mapView.mapboxMap.camera(for: routeCoordinates, camera: CameraOptions(), coordinatesPadding: UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20), maxZoom: nil, offset: nil) {
-                    mapView.camera.ease(to: camera, duration: 1.0)
+            if context.coordinator.lastRouteCountForZoom != routeCoordinates.count || context.coordinator.lastZoomedToRoute != streamManager.isZoomedToRoute {
+                context.coordinator.lastRouteCountForZoom = routeCoordinates.count
+                if routeCoordinates.count == 1 {
+                    mapView.camera.ease(to: CameraOptions(center: routeCoordinates[0], zoom: 14), duration: 1.0)
+                } else {
+                    if let camera = try? mapView.mapboxMap.camera(for: routeCoordinates, camera: CameraOptions(), coordinatesPadding: UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20), maxZoom: nil, offset: nil) {
+                        mapView.camera.ease(to: camera, duration: 1.0)
+                    }
                 }
             }
         } else if let loc = currentLocation {
-            mapView.camera.ease(to: CameraOptions(center: loc, zoom: 14), duration: 1.0)
+            if context.coordinator.lastEasedLocation?.latitude != loc.latitude || context.coordinator.lastEasedLocation?.longitude != loc.longitude || context.coordinator.lastZoomedToRoute != streamManager.isZoomedToRoute {
+                context.coordinator.lastEasedLocation = loc
+                mapView.camera.ease(to: CameraOptions(center: loc, zoom: 14), duration: 1.0)
+            }
         }
+        
+        context.coordinator.lastZoomedToRoute = streamManager.isZoomedToRoute
         
         // Update route polyline
         context.coordinator.updateRoute(routeCoordinates, on: mapView)
@@ -89,11 +97,16 @@ struct MapOverlayView: UIViewRepresentable {
         private var polylineAnnotationManager: PolylineAnnotationManager?
         private var timer: Timer?
         var latestRouteCoordinates: [CLLocationCoordinate2D] = []
+        private var lastRenderedRouteCount = 0
+        var lastEasedLocation: CLLocationCoordinate2D?
+        var lastZoomedToRoute: Bool = false
+        var lastRouteCountForZoom: Int = 0
         
         init(streamManager: StreamManager) {
             self.streamManager = streamManager
             self.timer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { [weak self] _ in
                 guard let self = self else { return }
+                guard self.streamManager.isStreaming else { return }
                 self.snapshotMap()
                 if let mapView = self.mapView, !self.latestRouteCoordinates.isEmpty {
                     self.updateRoute(self.latestRouteCoordinates, on: mapView)
@@ -130,6 +143,8 @@ struct MapOverlayView: UIViewRepresentable {
         }
         func updateRoute(_ coordinates: [CLLocationCoordinate2D], on mapView: MapView) {
             guard coordinates.count >= 2 else { return }
+            guard coordinates.count != lastRenderedRouteCount else { return }
+            lastRenderedRouteCount = coordinates.count
             self.latestRouteCoordinates = coordinates
             
             // Mapbox strongly recommends using AnnotationManagers for drawing lines instead of direct layer injection, 
