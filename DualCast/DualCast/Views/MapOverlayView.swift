@@ -86,7 +86,7 @@ struct MapOverlayView: UIViewRepresentable {
         weak var mapView: MapView?
         let streamManager: StreamManager
         var isAppBackgrounded = false
-        private var routeSourceAdded = false
+        private var polylineAnnotationManager: PolylineAnnotationManager?
         private var timer: Timer?
         var latestRouteCoordinates: [CLLocationCoordinate2D] = []
         
@@ -132,39 +132,21 @@ struct MapOverlayView: UIViewRepresentable {
             guard coordinates.count >= 2 else { return }
             self.latestRouteCoordinates = coordinates
             
-            let lineString = LineString(coordinates)
-            let feature = Feature(geometry: .lineString(lineString))
-            
-            if !routeSourceAdded {
-                var source = GeoJSONSource(id: "route-source")
-                source.data = .feature(feature)
-                
-                do {
-                    try mapView.mapboxMap.addSource(source)
-                    
-                    var layer = LineLayer(id: "route-layer", source: "route-source")
-                    // Use a static UIColor instead of dynamic system colors to prevent resolution failures in background/offscreen mode
-                    layer.lineColor = .constant(StyleColor(UIColor(red: 0.2, green: 0.6, blue: 1.0, alpha: 1.0)))
-                    layer.lineWidth = .constant(5.0)
-                    layer.lineOpacity = .constant(0.9)
-                    layer.lineJoin = .constant(.round)
-                    layer.lineCap = .constant(.round)
-                    
-                    try mapView.mapboxMap.addLayer(layer)
-                    routeSourceAdded = true
-                } catch {
-                    // Suppress if the style isn't fully loaded yet; timer will retry
-                    print("MapBox route layer add failed (likely style not ready): \(error.localizedDescription)")
-                    routeSourceAdded = false
-                }
-            } else {
-                do {
-                    try mapView.mapboxMap.updateGeoJSONSource(withId: "route-source", geoJSON: .feature(feature))
-                } catch {
-                    // Reset if the source was lost (e.g. style dynamically reloaded)
-                    routeSourceAdded = false
-                }
+            // Mapbox strongly recommends using AnnotationManagers for drawing lines instead of direct layer injection, 
+            // as it automatically manages all style-loading races, GeoJSON sources, and renderer re-bindings natively.
+            if polylineAnnotationManager == nil {
+                polylineAnnotationManager = mapView.annotations.makePolylineAnnotationManager()
             }
+            
+            let lineString = LineString(coordinates)
+            var polyline = PolylineAnnotation(lineString: lineString)
+            
+            // Bright neon cyan blue for maximum visibility against dark dark modes (alpha is included here instead of using lineOpacity)
+            polyline.lineColor = StyleColor(UIColor(red: 0.1, green: 0.7, blue: 1.0, alpha: 0.9))
+            polyline.lineWidth = 5.0
+            polyline.lineJoin = .round
+            
+            polylineAnnotationManager?.annotations = [polyline]
         }
     }
 }
