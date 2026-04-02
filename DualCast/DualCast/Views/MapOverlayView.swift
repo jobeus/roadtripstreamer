@@ -90,12 +90,12 @@ struct MapOverlayView: UIViewRepresentable {
         Coordinator(streamManager: streamManager)
     }
     
+    @MainActor
     class Coordinator {
         weak var mapView: MapView?
         let streamManager: StreamManager
         var isAppBackgrounded = false
         private var polylineAnnotationManager: PolylineAnnotationManager?
-        private var timer: Timer?
         var latestRouteCoordinates: [CLLocationCoordinate2D] = []
         private var lastRenderedRouteCount = 0
         var lastEasedLocation: CLLocationCoordinate2D?
@@ -105,18 +105,21 @@ struct MapOverlayView: UIViewRepresentable {
         
         init(streamManager: StreamManager) {
             self.streamManager = streamManager
-            self.timer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { [weak self] _ in
-                guard let self = self else { return }
-                guard self.streamManager.isStreaming || !self.hasInitialSnapshot else { return }
-                self.snapshotMap()
-                if let mapView = self.mapView, !self.latestRouteCoordinates.isEmpty {
-                    self.updateRoute(self.latestRouteCoordinates, on: mapView)
+            
+            Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { [weak self] timer in
+                guard let self = self else {
+                    timer.invalidate()
+                    return
+                }
+                
+                Task { @MainActor in
+                    guard self.streamManager.isStreaming || !self.hasInitialSnapshot else { return }
+                    self.snapshotMap()
+                    if let mapView = self.mapView, !self.latestRouteCoordinates.isEmpty {
+                        self.updateRoute(self.latestRouteCoordinates, on: mapView)
+                    }
                 }
             }
-        }
-        
-        deinit {
-            timer?.invalidate()
         }
         
         private func snapshotMap() {
