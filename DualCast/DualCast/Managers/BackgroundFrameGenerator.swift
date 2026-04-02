@@ -2,6 +2,7 @@ import AVFoundation
 import UIKit
 import HaishinKit
 
+@MainActor
 class BackgroundFrameGenerator {
     private var timer: Timer?
     private var pixelBuffer: CVPixelBuffer?
@@ -91,29 +92,35 @@ class BackgroundFrameGenerator {
     
     func start() {
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 15.0, repeats: true) { [weak self] _ in
-            guard let self = self, let pb = self.pixelBuffer, let stream = self.stream else { return }
-            
-            let now = CMClockGetTime(CMClockGetHostTimeClock())
-            var sampleTime = CMSampleTimingInfo(
-                duration: CMTime(value: 1, timescale: 15),
-                presentationTimeStamp: now,
-                decodeTimeStamp: .invalid
-            )
-            
-            var sampleBuffer: CMSampleBuffer?
-            guard let fd = self.formatDescription else { return }
-            
-            CMSampleBufferCreateReadyWithImageBuffer(
-                allocator: kCFAllocatorDefault,
-                imageBuffer: pb,
-                formatDescription: fd,
-                sampleTiming: &sampleTime,
-                sampleBufferOut: &sampleBuffer
-            )
-            
-            if let sb = sampleBuffer {
-                stream.append(sb)
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 15.0, repeats: true) { [weak self] timer in
+            guard let self = self else { 
+                timer.invalidate()
+                return 
+            }
+            Task { @MainActor in
+                guard let pb = self.pixelBuffer, let stream = self.stream else { return }
+                
+                let now = CMClockGetTime(CMClockGetHostTimeClock())
+                var sampleTime = CMSampleTimingInfo(
+                    duration: CMTime(value: 1, timescale: 15),
+                    presentationTimeStamp: now,
+                    decodeTimeStamp: .invalid
+                )
+                
+                var sampleBuffer: CMSampleBuffer?
+                guard let fd = self.formatDescription else { return }
+                
+                CMSampleBufferCreateReadyWithImageBuffer(
+                    allocator: kCFAllocatorDefault,
+                    imageBuffer: pb,
+                    formatDescription: fd,
+                    sampleTiming: &sampleTime,
+                    sampleBufferOut: &sampleBuffer
+                )
+                
+                if let sb = sampleBuffer {
+                    stream.append(sb)
+                }
             }
         }
         

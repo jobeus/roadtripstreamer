@@ -15,7 +15,6 @@ class RouteTracker: NSObject, ObservableObject {
     private let locationManager = CLLocationManager()
     private var lastGeocodedLocation: CLLocation?
     private let minDistanceFilter: CLLocationDistance = 10 // meters between route points
-    private var saveTimer: Timer?
     
     private nonisolated func getSavedRouteURL() -> URL {
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
@@ -42,20 +41,20 @@ class RouteTracker: NSObject, ObservableObject {
             object: nil
         )
         
-        saveTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                self?.saveRoute()
+        Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] timer in
+            guard let self = self else {
+                timer.invalidate()
+                return
+            }
+            Task { @MainActor in
+                self.saveRoute()
             }
         }
     }
     
     deinit {
         NotificationCenter.default.removeObserver(self)
-        // Must capture these off the main actor carefully, or do it during tear-down explicitly.  Since this is
-        // Swift 6 / strict concurrency, properties on a MainActor class can't be read in deinit synchronously.
-        // The safest approach is simply to rely on our saveRoute() call on stopTracking() or app backgrounding,
-        // rather than trying to synchronously save in deinit.
-        saveTimer?.invalidate()
+        // Timer automatically invalidates itself when self is deallocated due to guard let self.
     }
     
     private func loadRoute() {
@@ -185,10 +184,10 @@ extension RouteTracker: CLLocationManagerDelegate {
     
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         Task { @MainActor in
-            switch manager.authorizationStatus {
+            switch self.locationManager.authorizationStatus {
             case .authorizedWhenInUse, .authorizedAlways:
                 if self.isTracking {
-                    manager.startUpdatingLocation()
+                    self.locationManager.startUpdatingLocation()
                 }
             default:
                 break
