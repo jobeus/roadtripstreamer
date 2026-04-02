@@ -285,12 +285,12 @@ class StreamManager: NSObject, ObservableObject {
         connectionStatus = "Disconnected"
     }
     
-    @objc private func rtmpStatusHandler(_ notification: Notification) {
+    nonisolated @objc private func rtmpStatusHandler(_ notification: Notification) {
         let e = Event.from(notification)
         guard let data = e.data as? ASObject, let code = data["code"] as? String else { return }
         
         print("RTMP Status: \(code)")
-        DispatchQueue.main.async {
+        Task { @MainActor in
             switch code {
             case RTMPConnection.Code.connectSuccess.rawValue:
                 self.connectionStatus = "Live"
