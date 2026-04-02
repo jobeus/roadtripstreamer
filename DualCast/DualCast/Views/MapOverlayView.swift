@@ -101,12 +101,13 @@ struct MapOverlayView: UIViewRepresentable {
         var lastEasedLocation: CLLocationCoordinate2D?
         var lastZoomedToRoute: Bool = false
         var lastRouteCountForZoom: Int = 0
+        private var hasInitialSnapshot = false
         
         init(streamManager: StreamManager) {
             self.streamManager = streamManager
             self.timer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { [weak self] _ in
                 guard let self = self else { return }
-                guard self.streamManager.isStreaming else { return }
+                guard self.streamManager.isStreaming || !self.hasInitialSnapshot else { return }
                 self.snapshotMap()
                 if let mapView = self.mapView, !self.latestRouteCoordinates.isEmpty {
                     self.updateRoute(self.latestRouteCoordinates, on: mapView)
@@ -139,6 +140,7 @@ struct MapOverlayView: UIViewRepresentable {
             
             if let cgImage = image.cgImage {
                 streamManager.updateMapImage(cgImage)
+                self.hasInitialSnapshot = true
             }
         }
         func updateRoute(_ coordinates: [CLLocationCoordinate2D], on mapView: MapView) {
