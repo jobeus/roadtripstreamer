@@ -25,10 +25,9 @@ struct MapOverlayView: UIViewRepresentable {
         mapView.ornaments.options.scaleBar.visibility = .hidden
         
         // Enable location puck and heading rotation
-        mapView.location.options.puckType = .puck2D(.makeDefault(showBearing: true))
-        mapView.location.options.puckBearingEnabled = true
-        mapView.location.options.puckBearing = .heading
-        
+        mapView.location.options.puckType = .puck2D(.makeDefault(showBearing: false))
+        mapView.location.options.puckBearingEnabled = false
+                
         let label = UILabel()
         label.tag = 999
         label.backgroundColor = UIColor.black.withAlphaComponent(0.6)
@@ -89,11 +88,16 @@ struct MapOverlayView: UIViewRepresentable {
         var isAppBackgrounded = false
         private var routeSourceAdded = false
         private var timer: Timer?
+        var latestRouteCoordinates: [CLLocationCoordinate2D] = []
         
         init(streamManager: StreamManager) {
             self.streamManager = streamManager
             self.timer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { [weak self] _ in
-                self?.snapshotMap()
+                guard let self = self else { return }
+                self.snapshotMap()
+                if let mapView = self.mapView, !self.latestRouteCoordinates.isEmpty {
+                    self.updateRoute(self.latestRouteCoordinates, on: mapView)
+                }
             }
         }
         
@@ -126,21 +130,35 @@ struct MapOverlayView: UIViewRepresentable {
         }
         func updateRoute(_ coordinates: [CLLocationCoordinate2D], on mapView: MapView) {
             guard coordinates.count >= 2 else { return }
+            self.latestRouteCoordinates = coordinates
             
             if !routeSourceAdded {
                 var source = GeoJSONSource(id: "route-source")
                 source.data = .geometry(.lineString(.init(coordinates)))
-                try? mapView.mapboxMap.addSource(source)
                 
-                var layer = LineLayer(id: "route-layer", source: "route-source")
-                layer.lineColor = .constant(StyleColor(.systemBlue))
-                layer.lineWidth = .constant(3.0)
-                layer.lineOpacity = .constant(0.8)
-                try? mapView.mapboxMap.addLayer(layer)
-                
-                routeSourceAdded = true
+                do {
+                    try mapView.mapboxMap.addSource(source)
+                    
+                    var layer = LineLayer(id: "route-layer", source: "route-source")
+                    // Use a slightly larger and brighter blue to stand out 
+                    layer.lineColor = .constant(StyleColor(.systemBlue))
+                    layer.lineWidth = .constant(4.0)
+                    layer.lineOpacity = .constant(0.9)
+                    
+                    try mapView.mapboxMap.addLayer(layer)
+                    routeSourceAdded = true
+                } catch {
+                    // Suppress if the style isn't fully loaded yet; timer will retry
+                    print("MapBox route layer add failed (likely style not ready): \(error.localizedDescription)")
+                    routeSourceAdded = false
+                }
             } else {
-                mapView.mapboxMap.updateGeoJSONSource(withId: "route-source", geoJSON: .geometry(.lineString(.init(coordinates))))
+                do {
+                    try mapView.mapboxMap.updateGeoJSONSource(withId: "route-source", geoJSON: .geometry(.lineString(.init(coordinates))))
+                } catch {
+                    // Reset if the source was lost (e.g. style dynamically reloaded)
+                    routeSourceAdded = false
+                }
             }
         }
     }
